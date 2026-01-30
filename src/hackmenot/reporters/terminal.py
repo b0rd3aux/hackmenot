@@ -20,11 +20,11 @@ class TerminalReporter(BaseReporter):
         Severity.LOW: ("green", "LOW", "dim green"),
     }
 
-    SEVERITY_EMOJI = {
-        Severity.CRITICAL: "[red]●[/red]",
-        Severity.HIGH: "[yellow]●[/yellow]",
-        Severity.MEDIUM: "[bright_yellow]●[/bright_yellow]",
-        Severity.LOW: "[green]●[/green]",
+    SEVERITY_COLORS = {
+        Severity.CRITICAL: "red",
+        Severity.HIGH: "yellow",
+        Severity.MEDIUM: "bright_yellow",
+        Severity.LOW: "green",
     }
 
     def __init__(self, console: Console | None = None) -> None:
@@ -144,16 +144,20 @@ class TerminalReporter(BaseReporter):
 
         counts = Text()
         counts.append("  ")
-        counts.append(f"{self.SEVERITY_EMOJI[Severity.CRITICAL]} Critical: ", style="default")
+        counts.append("●", style=self.SEVERITY_COLORS[Severity.CRITICAL])
+        counts.append(" Critical: ", style="default")
         counts.append(str(summary[Severity.CRITICAL]), style="bold red")
         counts.append("  ")
-        counts.append(f"{self.SEVERITY_EMOJI[Severity.HIGH]} High: ", style="default")
+        counts.append("●", style=self.SEVERITY_COLORS[Severity.HIGH])
+        counts.append(" High: ", style="default")
         counts.append(str(summary[Severity.HIGH]), style="bold yellow")
         counts.append("  ")
-        counts.append(f"{self.SEVERITY_EMOJI[Severity.MEDIUM]} Medium: ", style="default")
+        counts.append("●", style=self.SEVERITY_COLORS[Severity.MEDIUM])
+        counts.append(" Medium: ", style="default")
         counts.append(str(summary[Severity.MEDIUM]), style="bright_yellow")
         counts.append("  ")
-        counts.append(f"{self.SEVERITY_EMOJI[Severity.LOW]} Low: ", style="default")
+        counts.append("●", style=self.SEVERITY_COLORS[Severity.LOW])
+        counts.append(" Low: ", style="default")
         counts.append(str(summary[Severity.LOW]), style="dim green")
 
         self.console.print()
