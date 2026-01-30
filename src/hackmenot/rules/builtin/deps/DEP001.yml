@@ -1,0 +1,27 @@
+id: DEP001
+name: hallucinated-import
+severity: critical
+category: dependencies
+languages: [python]
+description: "Import of potentially non-existent package"
+ai_context: "AI sometimes invents plausible-sounding package names that don't exist"
+
+pattern:
+  type: import
+  check: package_exists
+
+message: "Package '{package_name}' may not exist - verify on PyPI"
+
+fix:
+  template: |
+    # Verify the package exists on PyPI before using:
+    # pip search {package_name}
+    # Or check: https://pypi.org/project/{package_name}/
+
+education: |
+  AI assistants sometimes "hallucinate" package names that sound plausible but don't exist.
+  Attackers can register these names with malicious code. Always verify packages exist
+  on PyPI/npm before adding them to your project.
+
+references:
+  - https://blog.phylum.io/phylum-discovers-npm-package-mathjs-min-contains-discord-token-grabber

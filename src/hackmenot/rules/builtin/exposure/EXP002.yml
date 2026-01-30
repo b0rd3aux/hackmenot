@@ -1,0 +1,27 @@
+id: EXP002
+name: verbose-error-messages
+severity: medium
+category: exposure
+languages: [python]
+description: "Verbose error messages may expose sensitive information"
+ai_context: "AI often generates detailed error messages for debugging that leak internals"
+
+pattern:
+  type: fstring
+  contains: ["traceback", "exc_info", "print(e)", "print(error)", "str(exception)"]
+
+message: "Verbose error handling may expose sensitive information"
+
+fix:
+  template: |
+    # Log errors securely, return generic message to users:
+    # logger.exception("Internal error")
+    # return {"error": "An internal error occurred"}
+
+education: |
+  AI assistants often generate detailed error messages that include stack traces,
+  database queries, or internal paths. These should be logged securely but not
+  returned to users.
+
+references:
+  - https://owasp.org/www-community/Improper_Error_Handling

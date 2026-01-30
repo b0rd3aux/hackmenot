@@ -1,0 +1,27 @@
+id: CRYPTO001
+name: weak-hash-md5
+severity: high
+category: cryptography
+languages: [python]
+description: "Use of MD5 hash algorithm"
+ai_context: "AI training data contains many examples using MD5, though it's cryptographically broken"
+
+pattern:
+  type: fstring
+  contains: ["md5(", "hashlib.md5"]
+
+message: "MD5 is cryptographically broken and should not be used for security"
+
+fix:
+  template: |
+    # Use SHA-256 or better:
+    # import hashlib
+    # hashlib.sha256(data).hexdigest()
+
+education: |
+  MD5 has known collision vulnerabilities and should not be used for security purposes.
+  AI often suggests MD5 because it appears frequently in training data.
+  Use SHA-256 or SHA-3 for cryptographic hashing, or bcrypt/argon2 for passwords.
+
+references:
+  - https://www.kb.cert.org/vuls/id/836068

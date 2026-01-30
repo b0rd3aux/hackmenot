@@ -1,0 +1,26 @@
+id: INJ001
+name: sql-injection-fstring
+severity: critical
+category: injection
+languages: [python]
+description: "SQL query built using f-string with user input"
+ai_context: "AI assistants often use f-strings for SQL queries because they're concise, but this creates SQL injection vulnerabilities"
+
+pattern:
+  type: fstring
+  contains: ["SELECT", "INSERT", "UPDATE", "DELETE", "FROM", "WHERE"]
+
+message: "Possible SQL injection: query built with f-string interpolation"
+
+fix:
+  template: |
+    # Use parameterized queries instead:
+    # cursor.execute("SELECT * FROM users WHERE id = ?", (user_id,))
+
+education: |
+  AI coding assistants often generate SQL queries using f-strings for simplicity.
+  This is vulnerable to SQL injection attacks. Always use parameterized queries
+  or an ORM that handles escaping automatically.
+
+references:
+  - https://owasp.org/www-community/attacks/SQL_Injection

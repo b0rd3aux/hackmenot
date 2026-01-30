@@ -1,0 +1,26 @@
+id: EXP001
+name: debug-mode-enabled
+severity: high
+category: exposure
+languages: [python]
+description: "Debug mode enabled in production code"
+ai_context: "AI examples often include debug=True for convenience during development"
+
+pattern:
+  type: fstring
+  contains: ["debug=True", "DEBUG=True", "DEBUG = True"]
+
+message: "Debug mode appears to be enabled - ensure this is disabled in production"
+
+fix:
+  template: |
+    # Use environment variable:
+    # DEBUG = os.environ.get("DEBUG", "false").lower() == "true"
+
+education: |
+  AI-generated code often includes debug=True for convenience.
+  Debug mode can expose sensitive information and should never be enabled in production.
+  Use environment variables to control debug settings.
+
+references:
+  - https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/01-Information_Gathering/

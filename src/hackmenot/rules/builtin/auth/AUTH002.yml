@@ -1,0 +1,27 @@
+id: AUTH002
+name: hardcoded-secret
+severity: critical
+category: authentication
+languages: [python]
+description: "Hardcoded secret or API key in source code"
+ai_context: "AI often includes placeholder secrets that developers forget to replace"
+
+pattern:
+  type: fstring
+  contains: ["SECRET_KEY", "API_KEY", "PASSWORD", "TOKEN", "PRIVATE_KEY"]
+
+message: "Possible hardcoded secret in source code"
+
+fix:
+  template: |
+    # Load secrets from environment variables:
+    # import os
+    # SECRET_KEY = os.environ.get("SECRET_KEY")
+
+education: |
+  AI assistants often generate placeholder secrets like "your-secret-key-here".
+  These frequently get committed to version control. Always load secrets from
+  environment variables or a secrets manager.
+
+references:
+  - https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/02-Configuration_and_Deployment_Management_Testing/04-Review_Old_Backup_and_Unreferenced_Files_for_Sensitive_Information
