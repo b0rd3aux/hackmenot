@@ -1,0 +1,1 @@
+"""hackmenot test suite."""
