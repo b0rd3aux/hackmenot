@@ -210,3 +210,6 @@ __marimo__/
 .claude/
 CLAUDE.md
 .claudeignore
+
+# Git worktrees
+.worktrees/
