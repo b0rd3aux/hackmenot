@@ -1,0 +1,25 @@
+id: INJ002
+name: command-injection-fstring
+severity: critical
+category: injection
+languages: [python]
+description: "Shell command built using f-string with user input"
+ai_context: "AI often generates shell commands with f-strings, creating command injection risks"
+
+pattern:
+  type: fstring
+  contains: ["os.system", "subprocess", "shell=True", "exec(", "eval("]
+
+message: "Possible command injection: shell command built with f-string"
+
+fix:
+  template: |
+    # Use subprocess with list arguments instead:
+    # subprocess.run(["command", arg1, arg2], shell=False)
+
+education: |
+  Building shell commands with f-strings allows attackers to inject malicious commands.
+  Use subprocess.run() with a list of arguments and shell=False.
+
+references:
+  - https://owasp.org/www-community/attacks/Command_Injection

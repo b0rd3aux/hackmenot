@@ -1,0 +1,27 @@
+id: AUTH001
+name: missing-auth-decorator
+severity: high
+category: authentication
+languages: [python]
+description: "Route handler missing authentication decorator"
+ai_context: "AI often generates Flask/FastAPI routes without authentication, assuming the happy path"
+
+pattern:
+  type: function
+  has_decorator: ["app.route", "app.get", "app.post", "app.put", "app.delete", "router.get", "router.post"]
+  missing_decorator: ["login_required", "auth_required", "jwt_required", "Depends(get_current_user)", "requires_auth"]
+
+message: "Endpoint '{function_name}' has no authentication decorator"
+
+fix:
+  template: |
+    @login_required  # Add appropriate auth decorator
+    {original}
+
+education: |
+  AI coding tools frequently generate API endpoints without authentication.
+  Always explicitly add authentication decorators or middleware.
+  Prompt AI with: "Add authentication using [your auth pattern]"
+
+references:
+  - https://owasp.org/API-Security/

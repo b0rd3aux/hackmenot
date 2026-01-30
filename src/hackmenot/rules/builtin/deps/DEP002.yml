@@ -1,0 +1,26 @@
+id: DEP002
+name: typosquat-risk
+severity: high
+category: dependencies
+languages: [python]
+description: "Import similar to popular package - possible typosquat"
+ai_context: "AI may generate slightly misspelled package names"
+
+pattern:
+  type: import
+  check: typosquat
+
+message: "Package '{package_name}' is similar to '{similar_to}' - possible typosquat"
+
+fix:
+  template: |
+    # Verify you're using the correct package name.
+    # Did you mean: {similar_to}?
+
+education: |
+  Typosquatting is when attackers register package names similar to popular packages.
+  AI may accidentally generate these misspellings. Always double-check package names,
+  especially for popular packages like 'requests', 'django', 'flask'.
+
+references:
+  - https://snyk.io/blog/typosquatting-attacks/

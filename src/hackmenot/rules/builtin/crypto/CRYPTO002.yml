@@ -1,0 +1,26 @@
+id: CRYPTO002
+name: weak-hash-sha1
+severity: medium
+category: cryptography
+languages: [python]
+description: "Use of SHA1 hash algorithm"
+ai_context: "SHA1 is deprecated for security use but AI still commonly suggests it"
+
+pattern:
+  type: fstring
+  contains: ["sha1(", "hashlib.sha1"]
+
+message: "SHA1 is deprecated for security purposes"
+
+fix:
+  template: |
+    # Use SHA-256 or better:
+    # import hashlib
+    # hashlib.sha256(data).hexdigest()
+
+education: |
+  SHA1 has theoretical collision attacks and is deprecated for security use.
+  Use SHA-256 or SHA-3 for cryptographic hashing.
+
+references:
+  - https://shattered.io/
