@@ -3,6 +3,7 @@
 import time
 from pathlib import Path
 
+from hackmenot.core.cache import FileCache
 from hackmenot.core.models import Finding, ScanResult, Severity
 from hackmenot.parsers.python import PythonParser
 from hackmenot.rules.engine import RulesEngine
@@ -14,9 +15,10 @@ class Scanner:
 
     SUPPORTED_EXTENSIONS = {".py"}
 
-    def __init__(self) -> None:
+    def __init__(self, cache: FileCache | None = None) -> None:
         self.parser = PythonParser()
         self.engine = RulesEngine()
+        self.cache = cache
         self._load_rules()
 
     def _load_rules(self) -> None:
@@ -30,6 +32,7 @@ class Scanner:
         self,
         paths: list[Path],
         min_severity: Severity = Severity.LOW,
+        use_cache: bool = True,
     ) -> ScanResult:
         """Scan paths for security vulnerabilities."""
         start_time = time.time()
@@ -40,7 +43,7 @@ class Scanner:
 
         for file_path in files:
             try:
-                file_findings = self._scan_file(file_path)
+                file_findings = self._get_findings_for_file(file_path, use_cache)
                 # Filter by severity
                 file_findings = [f for f in file_findings if f.severity >= min_severity]
                 findings.extend(file_findings)
@@ -69,6 +72,22 @@ class Scanner:
                     files.extend(path.rglob(f"*{ext}"))
 
         return sorted(set(files))
+
+    def _get_findings_for_file(
+        self, file_path: Path, use_cache: bool
+    ) -> list[Finding]:
+        """Get findings for a file, using cache if available."""
+        if use_cache and self.cache is not None:
+            cached = self.cache.get(file_path)
+            if cached is not None:
+                return cached
+
+        findings = self._scan_file(file_path)
+
+        if use_cache and self.cache is not None:
+            self.cache.store(file_path, findings)
+
+        return findings
 
     def _scan_file(self, file_path: Path) -> list[Finding]:
         """Scan a single file."""
