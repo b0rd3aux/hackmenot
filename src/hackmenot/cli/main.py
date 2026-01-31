@@ -115,6 +115,11 @@ def scan(
         "-c",
         help="Path to config file",
     ),
+    include_deps: bool = typer.Option(
+        False,
+        "--include-deps",
+        help="Also scan dependency files for security issues",
+    ),
 ) -> None:
     """Scan code for security vulnerabilities."""
     # Use CI-friendly console if --ci flag is set
@@ -187,6 +192,19 @@ def scan(
         # Run scan (bypass cache if --full is set)
         scanner = Scanner(config=config)
         result = scanner.scan(scan_paths, min_severity=min_severity, use_cache=not full)
+
+        # Include dependency scanning if requested
+        if include_deps:
+            from hackmenot.deps.scanner import DependencyScanner
+            dep_scanner = DependencyScanner()
+            project_dir = scan_paths[0].parent if scan_paths[0].is_file() else scan_paths[0]
+            dep_result = dep_scanner.scan(project_dir)
+            # Merge findings
+            result = ScanResult(
+                files_scanned=result.files_scanned + dep_result.files_scanned,
+                findings=result.findings + dep_result.findings,
+                scan_time_ms=result.scan_time_ms + dep_result.scan_time_ms,
+            )
 
         # Output results (before applying fixes)
         if pr_comment:
