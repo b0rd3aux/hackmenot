@@ -1,0 +1,52 @@
+name: 'hackmenot Security Scan'
+description: 'Scan code for AI-generated security vulnerabilities'
+author: 'hackmenot'
+branding:
+  icon: 'shield'
+  color: 'purple'
+
+inputs:
+  path:
+    description: 'Path to scan'
+    required: false
+    default: '.'
+  fail-on:
+    description: 'Minimum severity to fail on (critical, high, medium, low)'
+    required: false
+    default: 'high'
+  sarif:
+    description: 'Upload SARIF results to GitHub Code Scanning'
+    required: false
+    default: 'true'
+
+outputs:
+  findings:
+    description: 'Number of findings'
+    value: ${{ steps.scan.outputs.findings }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Install hackmenot
+      shell: bash
+      run: pip install hackmenot
+
+    - name: Run scan
+      id: scan
+      shell: bash
+      run: |
+        hackmenot scan ${{ inputs.path }} --ci --fail-on ${{ inputs.fail-on }} --format sarif > hackmenot-results.sarif || exit_code=$?
+        findings=$(grep -o '"ruleId"' hackmenot-results.sarif 2>/dev/null | wc -l || echo "0")
+        echo "findings=$findings" >> $GITHUB_OUTPUT
+        exit ${exit_code:-0}
+
+    - name: Upload SARIF
+      if: inputs.sarif == 'true' && always()
+      uses: github/codeql-action/upload-sarif@v3
+      with:
+        sarif_file: hackmenot-results.sarif

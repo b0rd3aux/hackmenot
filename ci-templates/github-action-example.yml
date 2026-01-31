@@ -1,0 +1,63 @@
+# Example: How to use hackmenot in your GitHub Actions workflows
+# Copy this file to your repository's .github/workflows/ directory
+
+name: Security Scan
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  # Schedule daily scans at midnight UTC
+  schedule:
+    - cron: '0 0 * * *'
+
+jobs:
+  # Option 1: Use the hackmenot action directly
+  hackmenot-action:
+    name: hackmenot Security Scan (Action)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run hackmenot scan
+        uses: hackmenot/hackmenot@v1
+        with:
+          path: '.'
+          fail-on: 'high'
+          sarif: 'true'
+
+  # Option 2: Use the reusable workflow
+  # hackmenot-workflow:
+  #   name: hackmenot Security Scan (Workflow)
+  #   uses: hackmenot/hackmenot/.github/workflows/hackmenot.yml@main
+  #   with:
+  #     path: '.'
+  #     fail-on: 'high'
+  #     sarif: true
+
+  # Option 3: Manual installation (for more control)
+  # hackmenot-manual:
+  #   name: hackmenot Security Scan (Manual)
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout code
+  #       uses: actions/checkout@v4
+  #
+  #     - name: Set up Python
+  #       uses: actions/setup-python@v5
+  #       with:
+  #         python-version: '3.11'
+  #
+  #     - name: Install hackmenot
+  #       run: pip install hackmenot
+  #
+  #     - name: Run hackmenot scan
+  #       run: |
+  #         hackmenot scan . --ci --fail-on high --format sarif > results.sarif
+  #
+  #     - name: Upload SARIF
+  #       uses: github/codeql-action/upload-sarif@v3
+  #       with:
+  #         sarif_file: results.sarif

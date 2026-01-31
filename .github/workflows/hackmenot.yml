@@ -1,0 +1,73 @@
+# Reusable workflow for hackmenot security scanning
+# Use this workflow in your repositories by calling it from your workflow
+
+name: hackmenot Security Scan
+
+on:
+  workflow_call:
+    inputs:
+      path:
+        description: 'Path to scan'
+        required: false
+        type: string
+        default: '.'
+      fail-on:
+        description: 'Minimum severity to fail on (critical, high, medium, low)'
+        required: false
+        type: string
+        default: 'high'
+      sarif:
+        description: 'Upload SARIF results to GitHub Code Scanning'
+        required: false
+        type: boolean
+        default: true
+      python-version:
+        description: 'Python version to use'
+        required: false
+        type: string
+        default: '3.11'
+    outputs:
+      findings:
+        description: 'Number of findings'
+        value: ${{ jobs.scan.outputs.findings }}
+
+jobs:
+  scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    outputs:
+      findings: ${{ steps.scan.outputs.findings }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ inputs.python-version }}
+
+      - name: Install hackmenot
+        run: pip install hackmenot
+
+      - name: Run hackmenot scan
+        id: scan
+        run: |
+          hackmenot scan ${{ inputs.path }} --ci --fail-on ${{ inputs.fail-on }} --format sarif > hackmenot-results.sarif || exit_code=$?
+          findings=$(grep -o '"ruleId"' hackmenot-results.sarif 2>/dev/null | wc -l || echo "0")
+          echo "findings=$findings" >> $GITHUB_OUTPUT
+          exit ${exit_code:-0}
+
+      - name: Upload SARIF to GitHub Code Scanning
+        if: inputs.sarif && always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: hackmenot-results.sarif
+
+      - name: Upload scan results as artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hackmenot-results
+          path: hackmenot-results.sarif
+          retention-days: 30
