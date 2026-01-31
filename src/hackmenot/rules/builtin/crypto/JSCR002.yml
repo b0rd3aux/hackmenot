@@ -8,7 +8,7 @@ ai_context: "AI often suggests deprecated createCipher instead of createCipheriv
 
 pattern:
   type: call
-  contains: ["createCipher", "createDecipher"]
+  names: ["createCipher", "createDecipher"]
 
 message: "createCipher/createDecipher are deprecated due to weak key derivation"
 
