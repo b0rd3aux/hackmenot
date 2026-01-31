@@ -1,0 +1,40 @@
+id: VAL005
+name: unsafe-redirect
+severity: high
+category: validation
+languages: [python]
+description: "Redirect using user-controlled input without URL validation"
+ai_context: "AI generates redirect(request.args.get('next')) without validating the URL, enabling open redirect attacks"
+
+pattern:
+  type: call
+  contains: ["redirect(request.args", "redirect(request.form"]
+
+message: "Unsafe redirect - user-controlled redirect URL without validation enables open redirect attacks"
+
+fix:
+  template: |
+    # Validate redirect URL is safe:
+    from urllib.parse import urlparse
+
+    def is_safe_url(url):
+        if not url:
+            return False
+        parsed = urlparse(url)
+        # Only allow relative URLs or same-host URLs
+        return not parsed.netloc or parsed.netloc == request.host
+
+    next_url = request.args.get("next", "/")
+    if not is_safe_url(next_url):
+        next_url = "/"
+    return redirect(next_url)
+
+education: |
+  AI coding assistants often generate login flows with redirect functionality
+  using user-provided URLs (e.g., redirect(request.args.get("next"))). Without
+  validation, this creates open redirect vulnerabilities where attackers can
+  craft URLs that redirect users to malicious sites after authentication.
+  Always validate redirect URLs are relative or point to trusted domains.
+
+references:
+  - https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/11-Client-side_Testing/04-Testing_for_Client-side_URL_Redirect

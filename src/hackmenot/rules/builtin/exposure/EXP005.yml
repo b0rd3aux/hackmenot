@@ -1,0 +1,32 @@
+id: EXP005
+name: dotenv-without-gitignore
+severity: low
+category: exposure
+languages: [python]
+description: "Using dotenv without ensuring .env is gitignored"
+ai_context: "AI suggests dotenv for configuration but may not warn about .env file exposure"
+
+pattern:
+  type: call
+  contains: ["load_dotenv", "dotenv.load_dotenv", "dotenv_values"]
+
+message: "Using dotenv - ensure .env file is in .gitignore to prevent secret exposure"
+
+fix:
+  template: |
+    # Ensure .env is in .gitignore:
+    # echo ".env" >> .gitignore
+    #
+    # Also consider using .env.example for documentation:
+    # DATABASE_URL=postgresql://user:pass@localhost/db
+    # API_KEY=your-api-key-here
+
+education: |
+  AI-generated code frequently uses python-dotenv for configuration management.
+  While this is a good practice, the .env file often contains sensitive credentials
+  and must never be committed to version control. Always verify that .env is listed
+  in your .gitignore file and use .env.example to document required variables.
+
+references:
+  - https://owasp.org/www-community/vulnerabilities/Source_Code_Disclosure
+  - https://cwe.mitre.org/data/definitions/540.html
