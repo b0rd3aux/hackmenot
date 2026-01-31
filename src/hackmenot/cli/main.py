@@ -137,7 +137,7 @@ def scan(
         raise typer.Exit(1)
 
     # Run scan (bypass cache if --full is set)
-    scanner = Scanner()
+    scanner = Scanner(config=config)
     result = scanner.scan(paths, min_severity=min_severity, use_cache=not full)
 
     # Output results (before applying fixes)
@@ -147,8 +147,9 @@ def scan(
     elif format == OutputFormat.json:
         _output_json(result)
     elif format == OutputFormat.sarif:
-        console.print("[yellow]SARIF output not yet implemented[/yellow]")
-        _output_json(result)
+        from hackmenot.reporters.sarif import SARIFReporter
+        reporter = SARIFReporter()
+        print(reporter.render(result))
 
     # Handle fix modes
     if (fix or fix_interactive) and result.has_findings:
