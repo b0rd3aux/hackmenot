@@ -23,6 +23,8 @@ hackmenot scan [PATHS...] [OPTIONS]
 | `--fail-on` | Minimum severity for non-zero exit: `critical`, `high`, `medium`, `low` |
 | `--fix` | Automatically apply all available fixes |
 | `--fix-interactive` | Interactively choose fixes to apply |
+| `--dry-run` | Preview fixes without applying (requires `--fix`) |
+| `--diff` | Show unified diff output (requires `--dry-run`) |
 | `--full` | Bypass cache, perform full scan |
 | `--ci` | CI-friendly output (no colors) |
 | `--staged` | Scan only git staged files |
@@ -32,10 +34,26 @@ hackmenot scan [PATHS...] [OPTIONS]
 
 **Examples:**
 ```bash
+# Basic scan
 hackmenot scan .
+
+# Output SARIF format
 hackmenot scan . --format sarif > results.sarif
+
+# CI mode with fail threshold
 hackmenot scan . --ci --fail-on critical
+
+# Scan staged files only
 hackmenot scan --staged --ci
+
+# Auto-fix all issues
+hackmenot scan . --fix
+
+# Preview fixes without applying
+hackmenot scan . --fix --dry-run
+
+# Show unified diff of fixes
+hackmenot scan . --fix --dry-run --diff
 ```
 
 ### `hackmenot deps`
