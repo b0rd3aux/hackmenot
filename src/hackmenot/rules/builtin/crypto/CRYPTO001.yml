@@ -17,6 +17,8 @@ fix:
     # Use SHA-256 or better:
     # import hashlib
     # hashlib.sha256(data).hexdigest()
+  pattern: 'hashlib.md5({arg})'
+  replacement: 'hashlib.sha256({arg})'
 
 education: |
   MD5 has known collision vulnerabilities and should not be used for security purposes.

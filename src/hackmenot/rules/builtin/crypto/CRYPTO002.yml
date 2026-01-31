@@ -17,6 +17,8 @@ fix:
     # Use SHA-256 or better:
     # import hashlib
     # hashlib.sha256(data).hexdigest()
+  pattern: 'hashlib.sha1({arg})'
+  replacement: 'hashlib.sha256({arg})'
 
 education: |
   SHA1 has theoretical collision attacks and is deprecated for security use.

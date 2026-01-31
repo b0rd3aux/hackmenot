@@ -19,6 +19,8 @@ fix:
     # cipher = AES.new(key, AES.MODE_GCM, nonce=nonce)
     # or
     # cipher = AES.new(key, AES.MODE_CBC, iv=iv)
+  pattern: 'AES.MODE_ECB'
+  replacement: 'AES.MODE_GCM'
 
 education: |
   ECB (Electronic Codebook) mode encrypts identical plaintext blocks to identical

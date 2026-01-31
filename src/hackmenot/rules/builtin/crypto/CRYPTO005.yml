@@ -20,6 +20,8 @@ fix:
     #     public_exponent=65537,
     #     key_size=2048,  # or 4096 for higher security
     # )
+  pattern: 'key_size=1024'
+  replacement: 'key_size=2048'
 
 education: |
   RSA keys of 1024 bits or smaller can be factored with sufficient computational resources
