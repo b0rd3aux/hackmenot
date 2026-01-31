@@ -1,0 +1,28 @@
+id: GO_INJ004
+name: ldap-injection
+severity: high
+category: injection
+languages: [go]
+description: "Detects potential LDAP injection vulnerabilities"
+ai_context: "AI often generates LDAP queries without proper input escaping"
+
+pattern:
+  type: call
+  names:
+    - ldap.Search
+    - Search
+    - SearchRequest
+
+message: "Potential LDAP injection: {code_snippet}"
+
+fix:
+  template: |
+    # Escape special LDAP characters in user input:
+    # ldap.EscapeFilter(userInput)
+
+education: |
+  LDAP injection occurs when user input is directly used in LDAP queries.
+  Escape special characters like *, (, ), \, and NUL.
+
+references:
+  - https://owasp.org/www-community/attacks/LDAP_Injection

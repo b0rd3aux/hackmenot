@@ -1,0 +1,32 @@
+id: GO_INJ003
+name: path-traversal
+severity: high
+category: injection
+languages: [go]
+description: "Detects potential path traversal vulnerabilities"
+ai_context: "AI often generates file path operations without proper sanitization"
+
+pattern:
+  type: call
+  names:
+    - filepath.Join
+    - path.Join
+    - os.Open
+    - os.OpenFile
+    - os.ReadFile
+    - ioutil.ReadFile
+
+message: "Potential path traversal: {code_snippet}"
+
+fix:
+  template: |
+    # Validate file paths and use filepath.Clean to sanitize input:
+    # cleanPath := filepath.Clean(userPath)
+    # if !strings.HasPrefix(cleanPath, baseDir) { return error }
+
+education: |
+  Path traversal attacks use sequences like ../ to access files outside intended directories.
+  Always validate and sanitize file paths before use.
+
+references:
+  - https://owasp.org/www-community/attacks/Path_Traversal
