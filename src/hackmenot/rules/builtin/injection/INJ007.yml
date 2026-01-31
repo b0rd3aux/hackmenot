@@ -1,0 +1,33 @@
+id: INJ007
+name: subprocess-shell-injection
+severity: critical
+category: injection
+languages: [python]
+description: "Command injection via subprocess with shell=True and f-string"
+ai_context: "AI assistants often combine subprocess shell=True with f-strings for convenience, creating command injection vulnerabilities"
+
+pattern:
+  type: fstring
+  contains: ["subprocess.run", "subprocess.call", "subprocess.Popen", "shell=True"]
+
+message: "Critical: subprocess with shell=True and f-string - command injection vulnerability"
+
+fix:
+  template: |
+    # Use subprocess with a list of arguments and shell=False:
+    # subprocess.run(["command", arg1, arg2], shell=False, check=True)
+    #
+    # If shell features are needed, use shlex.quote() for arguments:
+    # import shlex
+    # subprocess.run(f"command {shlex.quote(user_input)}", shell=True)
+
+education: |
+  Using subprocess with shell=True interprets the command through the shell,
+  allowing shell metacharacters to be processed. When combined with f-strings
+  containing user input, attackers can inject additional commands using
+  characters like ; | && || ` $().
+  Always use subprocess with a list of arguments and shell=False, or use
+  shlex.quote() to escape user input if shell=True is unavoidable.
+
+references:
+  - https://owasp.org/www-community/attacks/Command_Injection

@@ -1,0 +1,31 @@
+id: INJ003
+name: path-traversal
+severity: high
+category: injection
+languages: [python]
+description: "Path traversal vulnerability with user-controlled input"
+ai_context: "AI assistants often concatenate user input directly into file paths, enabling directory traversal attacks"
+
+pattern:
+  type: call
+  contains: ["open(", "Path(", "..", "user", "input", "request"]
+
+message: "Possible path traversal: file path may contain user-controlled input with directory traversal sequences"
+
+fix:
+  template: |
+    # Sanitize and validate the path:
+    # import os
+    # base_dir = "/safe/directory"
+    # requested_path = os.path.normpath(os.path.join(base_dir, user_input))
+    # if not requested_path.startswith(base_dir):
+    #     raise ValueError("Path traversal attempt detected")
+
+education: |
+  Path traversal (also known as directory traversal) allows attackers to access files
+  outside the intended directory by using sequences like "../" in the path.
+  Always validate that resolved paths stay within the expected directory.
+  Use os.path.normpath() and verify the resulting path starts with the base directory.
+
+references:
+  - https://owasp.org/www-community/attacks/Path_Traversal

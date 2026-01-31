@@ -1,0 +1,35 @@
+id: CRYPTO006
+name: hardcoded-iv
+severity: high
+category: cryptography
+languages: [python]
+description: "Hardcoded initialization vector (IV) in encryption"
+ai_context: "AI examples often hardcode IVs for simplicity, but this breaks encryption security"
+
+pattern:
+  type: fstring
+  contains: ["iv=b\"", "iv=b'", "IV=b\"", "IV=b'", "iv = b\"", "iv = b'", "IV = b\"", "IV = b'"]
+
+message: "Initialization vectors (IVs) must be randomly generated for each encryption operation"
+
+fix:
+  template: |
+    # Generate a random IV for each encryption:
+    # import os
+    # iv = os.urandom(16)  # 16 bytes for AES
+    # cipher = AES.new(key, AES.MODE_CBC, iv=iv)
+    #
+    # Or use GCM mode which handles nonces:
+    # cipher = AES.new(key, AES.MODE_GCM)
+    # nonce = cipher.nonce  # automatically generated
+
+education: |
+  An initialization vector (IV) must be unique and unpredictable for each encryption
+  operation. Reusing an IV with the same key can leak information about the plaintext
+  and completely break security in some modes (like CTR or GCM).
+  AI often hardcodes IVs in examples for simplicity, but this creates serious vulnerabilities.
+  Always generate a fresh random IV using os.urandom() or secrets.token_bytes().
+
+references:
+  - https://csrc.nist.gov/publications/detail/sp/800-38a/final
+  - https://owasp.org/www-community/vulnerabilities/Insecure_Randomness

@@ -1,0 +1,36 @@
+id: EXP007
+name: verbose-exception-in-production
+severity: medium
+category: exposure
+languages: [python]
+description: "Debug mode enabled which exposes verbose exceptions"
+ai_context: "AI enables debug mode for development convenience without production safeguards"
+
+pattern:
+  type: string
+  contains: ["DEBUG = True", "DEBUG=True", "app.debug = True", "app.debug=True", "debug=True", "FLASK_DEBUG=1", "DJANGO_DEBUG=True"]
+
+message: "Debug mode enabled - verbose exceptions and debug info will be exposed in production"
+
+fix:
+  template: |
+    # Use environment variable for debug mode:
+    # import os
+    # DEBUG = os.environ.get("DEBUG", "false").lower() == "true"
+    #
+    # For Flask:
+    # app.debug = os.environ.get("FLASK_DEBUG", "0") == "1"
+    #
+    # For Django (settings.py):
+    # DEBUG = os.environ.get("DJANGO_DEBUG", "False") == "True"
+
+education: |
+  AI-generated code often enables debug mode for convenient development, but forgets
+  to disable it for production. Debug mode exposes detailed error pages with stack
+  traces, local variables, and configuration details. In frameworks like Flask and
+  Django, debug mode can even allow arbitrary code execution. Always use environment
+  variables to control debug settings and default to False in production.
+
+references:
+  - https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/01-Information_Gathering/
+  - https://cwe.mitre.org/data/definitions/489.html

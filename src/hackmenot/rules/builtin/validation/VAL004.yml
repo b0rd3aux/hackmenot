@@ -1,0 +1,34 @@
+id: VAL004
+name: mass-assignment
+severity: high
+category: validation
+languages: [python]
+description: "Model instantiated with unpacked request data without explicit field filtering"
+ai_context: "AI generates Model(**request.json) patterns that allow attackers to set arbitrary fields including admin flags or internal IDs"
+
+pattern:
+  type: call
+  contains: ["**request.json", "**request.form", "**request.get_json()"]
+
+message: "Mass assignment vulnerability - unpack request data directly into model without field filtering"
+
+fix:
+  template: |
+    # Explicitly specify allowed fields:
+    allowed_fields = {"name", "email", "bio"}
+    filtered_data = {k: v for k, v in request.json.items() if k in allowed_fields}
+    user = User(**filtered_data)
+
+    # Or use a schema/serializer:
+    schema = UserCreateSchema()
+    user = User(**schema.load(request.json))
+
+education: |
+  AI coding assistants often generate code that directly unpacks request data
+  into ORM models (e.g., User(**request.json)). This mass assignment pattern
+  allows attackers to set arbitrary fields they shouldn't control, such as
+  is_admin=True or id=1. Always explicitly whitelist allowed fields or use
+  a validation schema/serializer to filter input.
+
+references:
+  - https://owasp.org/API-Security/0xa6-mass-assignment/
