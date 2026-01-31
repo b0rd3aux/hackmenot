@@ -50,6 +50,16 @@ Repository = "https://github.com/hackmenot/hackmenot"
 [tool.hatch.build.targets.wheel]
 packages = ["src/hackmenot"]
 
+[tool.hatch.build.targets.wheel.sources]
+"src" = ""
+
+[tool.hatch.build]
+include = [
+    "src/hackmenot/**/*.py",
+    "src/hackmenot/**/*.yml",
+    "src/hackmenot/**/*.txt",
+]
+
 [tool.ruff]
 line-length = 100
 target-version = "py311"
