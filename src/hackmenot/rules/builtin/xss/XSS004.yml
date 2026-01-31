@@ -1,0 +1,32 @@
+id: XSS004
+name: postmessage-origin-check
+severity: medium
+category: xss
+languages: [javascript]
+description: "postMessage usage without proper origin validation"
+ai_context: "AI may implement postMessage handlers without origin checks, allowing cross-origin attacks"
+
+pattern:
+  type: string
+  contains: ["postMessage", "addEventListener('message", "addEventListener(\"message", "onmessage"]
+
+message: "postMessage handlers should validate event.origin to prevent cross-origin attacks"
+
+fix:
+  template: |
+    # Always validate the origin in message handlers:
+    # window.addEventListener('message', (event) => {
+    #   if (event.origin !== 'https://trusted-domain.com') {
+    #     return; // Reject messages from untrusted origins
+    #   }
+    #   // Process the message
+    # });
+
+education: |
+  The postMessage API allows cross-origin communication, but without proper origin
+  validation, malicious sites can send messages to your application. Always check
+  event.origin against a whitelist of trusted domains before processing messages.
+
+references:
+  - https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage
+  - https://owasp.org/www-community/attacks/xss/
