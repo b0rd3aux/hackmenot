@@ -17,6 +17,8 @@ fix:
   template: |
     # Remove InsecureSkipVerify: true and properly configure TLS certificates
     # Use proper CA certificates or system root CAs
+  pattern: 'InsecureSkipVerify: true'
+  replacement: 'InsecureSkipVerify: false'
 
 education: |
   Setting InsecureSkipVerify to true disables TLS certificate verification,
