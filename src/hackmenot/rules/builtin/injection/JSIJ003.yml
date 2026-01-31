@@ -8,7 +8,7 @@ ai_context: "AI often uses exec() or spawn with shell:true for convenience, enab
 
 pattern:
   type: call
-  contains: ["exec", "execSync", "spawn"]
+  names: ["exec", "execSync", "spawn"]
   context: ["shell: true", "shell:true"]
 
 message: "Possible command injection: using exec/spawn with shell option"

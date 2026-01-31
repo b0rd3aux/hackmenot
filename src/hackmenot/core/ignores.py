@@ -7,29 +7,33 @@ class IgnoreHandler:
     """Parses and manages inline ignore comments for hackmenot.
 
     Supports three types of ignore comments:
-    - Same-line: # hackmenot:ignore[RULE] - reason
-    - Next-line: # hackmenot:ignore-next-line[RULE] - reason
-    - File-level: # hackmenot:ignore-file - reason
+    - Same-line: # hackmenot:ignore[RULE] - reason (or // for JavaScript)
+    - Next-line: # hackmenot:ignore-next-line[RULE] - reason (or // for JavaScript)
+    - File-level: # hackmenot:ignore-file - reason (or // for JavaScript)
 
     All ignore comments require a reason (after the dash) to be valid.
+    Supports both Python-style (#) and JavaScript-style (//) comments.
     """
 
     # Pattern for same-line ignores: # hackmenot:ignore[RULE] - reason
     # Matches at end of line, requires non-empty reason after dash
+    # Supports both # and // comment styles
     SAME_LINE_PATTERN = re.compile(
-        r"#\s*hackmenot:ignore\[([A-Z]+\d+)\]\s*-\s*(.+)$"
+        r"(?:#|//)\s*hackmenot:ignore\[([A-Z]+\d+)\]\s*-\s*(.+)$"
     )
 
     # Pattern for next-line ignores: # hackmenot:ignore-next-line[RULE] - reason
     # Matches as a standalone comment line (possibly indented)
+    # Supports both # and // comment styles
     NEXT_LINE_PATTERN = re.compile(
-        r"^\s*#\s*hackmenot:ignore-next-line\[([A-Z]+\d+)\]\s*-\s*(.+)$"
+        r"^\s*(?:#|//)\s*hackmenot:ignore-next-line\[([A-Z]+\d+)\]\s*-\s*(.+)$"
     )
 
     # Pattern for file-level ignores: # hackmenot:ignore-file - reason
     # Matches as a standalone comment line (possibly indented)
+    # Supports both # and // comment styles
     FILE_IGNORE_PATTERN = re.compile(
-        r"^\s*#\s*hackmenot:ignore-file\s*-\s*(.+)$"
+        r"^\s*(?:#|//)\s*hackmenot:ignore-file\s*-\s*(.+)$"
     )
 
     def __init__(self) -> None:

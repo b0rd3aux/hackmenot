@@ -61,13 +61,19 @@ class RulesEngine:
         return findings
 
     def _detect_language(self, file_path: Path) -> str:
-        """Detect language from file extension."""
+        """Detect language from file extension.
+
+        Note: TypeScript is treated as JavaScript for rule matching since
+        JavaScript rules apply to TypeScript files as well.
+        """
         ext_map = {
             ".py": "python",
             ".js": "javascript",
-            ".ts": "typescript",
+            ".ts": "javascript",  # TypeScript is a superset of JavaScript
             ".jsx": "javascript",
-            ".tsx": "typescript",
+            ".tsx": "javascript",  # TSX is also treated as JavaScript
+            ".mjs": "javascript",
+            ".cjs": "javascript",
         }
         return ext_map.get(file_path.suffix.lower(), "unknown")
 
@@ -226,9 +232,15 @@ class RulesEngine:
                     )
                 )
 
-        # Check assignments for string values
+        # Check assignments for string values or matching assignment targets
         for assignment in parse_result.get_assignments():
-            if assignment.value and any(kw.upper() in assignment.value.upper() for kw in contains):
+            # Check if the pattern matches the assignment name (target) or value
+            matches_name = any(kw in assignment.name for kw in contains)
+            matches_value = assignment.value and any(kw.upper() in assignment.value.upper() for kw in contains)
+
+            if matches_name or matches_value:
+                value_preview = assignment.value[:50] if assignment.value else ""
+                value_suffix = "..." if assignment.value and len(assignment.value) > 50 else ""
                 findings.append(
                     Finding(
                         rule_id=rule.id,
@@ -238,11 +250,30 @@ class RulesEngine:
                         file_path=str(file_path),
                         line_number=assignment.line_number,
                         column=assignment.column,
-                        code_snippet=f"{assignment.name} = {assignment.value[:50]}{'...' if assignment.value and len(assignment.value) > 50 else ''}",
+                        code_snippet=f"{assignment.name} = {value_preview}{value_suffix}",
                         fix_suggestion=rule.fix_template,
                         education=rule.education,
                     )
                 )
+
+        # Check JSX element attributes for patterns
+        for jsx_elem in parse_result.get_jsx_elements():
+            for attr in jsx_elem.attributes:
+                if any(kw in attr for kw in contains):
+                    findings.append(
+                        Finding(
+                            rule_id=rule.id,
+                            rule_name=rule.name,
+                            severity=rule.severity,
+                            message=rule.message,
+                            file_path=str(file_path),
+                            line_number=jsx_elem.line_number,
+                            column=jsx_elem.column,
+                            code_snippet=f"<{jsx_elem.name} {attr[:50]}{'...' if len(attr) > 50 else ''}>",
+                            fix_suggestion=rule.fix_template,
+                            education=rule.education,
+                        )
+                    )
 
         return findings
 

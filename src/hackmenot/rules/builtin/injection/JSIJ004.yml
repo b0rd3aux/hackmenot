@@ -8,7 +8,7 @@ ai_context: "AI may use vm module to run dynamic code, which can lead to sandbox
 
 pattern:
   type: call
-  contains: ["vm.runInContext", "vm.runInNewContext", "vm.runInThisContext"]
+  names: ["vm.runInContext", "vm.runInNewContext", "vm.runInThisContext"]
 
 message: "Possible code injection via vm module - vm sandbox can be escaped"
 
