@@ -56,7 +56,7 @@ class FileCache:
     def __init__(self, cache_dir: Path | None = None) -> None:
         self.cache_dir = cache_dir or self._default_cache_dir()
         self.cache_dir.mkdir(parents=True, exist_ok=True)
-        self._cache: dict[str, tuple[str, Any]] = {}
+        self._cache: dict[str, tuple[str, list[dict[str, Any]]]] = {}
         self._load_cache()
 
     def _default_cache_dir(self) -> Path:
@@ -70,8 +70,8 @@ class FileCache:
             try:
                 with open(cache_file) as f:
                     data = json.load(f)
-                    self._cache = {k: tuple(v) for k, v in data.items()}
-            except Exception:
+                    self._cache = {k: (v[0], v[1]) for k, v in data.items()}
+            except (json.JSONDecodeError, OSError, KeyError, IndexError):
                 self._cache = {}
 
     def _save_cache(self) -> None:
@@ -80,7 +80,7 @@ class FileCache:
         try:
             with open(cache_file, "w") as f:
                 json.dump({k: list(v) for k, v in self._cache.items()}, f)
-        except Exception:
+        except OSError:
             pass  # Fail silently for cache writes
 
     def _file_hash(self, file_path: Path) -> str:
@@ -104,9 +104,7 @@ class FileCache:
             return None
 
         # Deserialize findings from dict format
-        if findings_data and isinstance(findings_data[0], dict):
-            return _deserialize_findings(findings_data)
-        return findings_data
+        return _deserialize_findings(findings_data)
 
     def store(self, file_path: Path, findings: list[Finding]) -> None:
         """Store results for a file."""
