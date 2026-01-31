@@ -1,0 +1,27 @@
+id: JSIJ002
+name: sql-template-literal
+severity: critical
+category: injection
+languages: [javascript]
+description: "SQL query built using template literals with potential user input"
+ai_context: "AI assistants often use template literals for SQL queries because they're convenient, but this creates SQL injection vulnerabilities"
+
+pattern:
+  type: template_literal
+  contains: ["SELECT", "INSERT", "UPDATE", "DELETE", "FROM", "WHERE"]
+
+message: "Possible SQL injection: query built with template literal interpolation"
+
+fix:
+  template: |
+    # Use parameterized queries instead:
+    # db.query("SELECT * FROM users WHERE id = $1", [userId])
+
+education: |
+  Template literals make it easy to build SQL queries with embedded variables,
+  but this pattern is vulnerable to SQL injection attacks. Always use
+  parameterized queries or a query builder that handles escaping automatically.
+
+references:
+  - https://owasp.org/www-community/attacks/SQL_Injection
+  - https://cheatsheetseries.owasp.org/cheatsheets/Query_Parameterization_Cheat_Sheet.html
