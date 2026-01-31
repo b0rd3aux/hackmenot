@@ -1,0 +1,18 @@
+id: TF_SG004
+name: sg-all-ports
+severity: critical
+category: network
+languages: [terraform]
+description: Detects security groups with all ports open
+message: "Security group allows all ports: {code_snippet}"
+pattern:
+  type: resource
+  resource_type: aws_security_group
+  field: ingress
+  contains: ["'from_port': 0"]
+fix_template: "Specify only required ports in security group rules"
+education: |
+  Opening all ports significantly increases the attack surface.
+  Only open ports that are strictly necessary.
+references:
+  - https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html

@@ -1,0 +1,17 @@
+id: TF_ENC003
+name: elasticache-no-encryption
+severity: high
+category: encryption
+languages: [terraform]
+description: Detects ElastiCache without encryption at rest
+message: "ElastiCache without encryption: {code_snippet}"
+pattern:
+  type: resource
+  resource_type: aws_elasticache_replication_group
+  missing_field: at_rest_encryption_enabled
+  expected_value: true
+fix_template: "Add at_rest_encryption_enabled = true"
+education: |
+  ElastiCache should have encryption at rest enabled to protect cached data.
+references:
+  - https://docs.aws.amazon.com/AmazonElastiCache/latest/red-ug/at-rest-encryption.html

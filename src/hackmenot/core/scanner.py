@@ -10,8 +10,10 @@ from hackmenot.core.cache import FileCache
 from hackmenot.core.config import Config
 from hackmenot.core.ignores import IgnoreHandler
 from hackmenot.core.models import Finding, ScanResult, Severity
+from hackmenot.parsers.golang import GoParser
 from hackmenot.parsers.javascript import JavaScriptParser
 from hackmenot.parsers.python import PythonParser
+from hackmenot.parsers.terraform import TerraformParser
 from hackmenot.rules.engine import RulesEngine
 from hackmenot.rules.registry import RuleRegistry
 
@@ -19,8 +21,10 @@ from hackmenot.rules.registry import RuleRegistry
 class Scanner:
     """Main scanner that orchestrates parsing and rule checking."""
 
-    SUPPORTED_EXTENSIONS = {".py", ".js", ".ts", ".mjs", ".cjs", ".jsx", ".tsx"}
+    SUPPORTED_EXTENSIONS = {".py", ".js", ".ts", ".mjs", ".cjs", ".jsx", ".tsx", ".go", ".tf", ".tfvars"}
     JS_EXTENSIONS = {".js", ".ts", ".mjs", ".cjs", ".jsx", ".tsx"}
+    GO_EXTENSIONS = {".go"}
+    TERRAFORM_EXTENSIONS = {".tf", ".tfvars"}
     DEFAULT_WORKERS = min(32, (os.cpu_count() or 1) + 4)
 
     def __init__(
@@ -28,6 +32,8 @@ class Scanner:
     ) -> None:
         self.parser = PythonParser()
         self.js_parser = JavaScriptParser()
+        self.go_parser = GoParser()
+        self.tf_parser = TerraformParser()
         self.engine = RulesEngine()
         self.cache = cache
         self.config = config or Config()
@@ -201,10 +207,14 @@ class Scanner:
             file_path: The file path to check.
 
         Returns:
-            "python" or "javascript" based on the file extension.
+            "python", "javascript", "go", or "terraform" based on the file extension.
         """
         if file_path.suffix in self.JS_EXTENSIONS:
             return "javascript"
+        if file_path.suffix in self.GO_EXTENSIONS:
+            return "go"
+        if file_path.suffix in self.TERRAFORM_EXTENSIONS:
+            return "terraform"
         return "python"
 
     def _scan_file(self, file_path: Path) -> list[Finding]:
@@ -226,6 +236,18 @@ class Scanner:
         if language == "javascript":
             # Parse JavaScript/TypeScript file
             parse_result = self.js_parser.parse_file(file_path)
+            if parse_result.has_error:
+                return []
+            return self.engine.check(parse_result, file_path, ignores=ignores)
+        elif language == "go":
+            # Parse Go file
+            parse_result = self.go_parser.parse_file(file_path)
+            if parse_result.has_error:
+                return []
+            return self.engine.check(parse_result, file_path, ignores=ignores)
+        elif language == "terraform":
+            # Parse Terraform file
+            parse_result = self.tf_parser.parse_file(file_path)
             if parse_result.has_error:
                 return []
             return self.engine.check(parse_result, file_path, ignores=ignores)

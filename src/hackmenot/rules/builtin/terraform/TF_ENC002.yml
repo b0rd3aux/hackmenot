@@ -1,0 +1,17 @@
+id: TF_ENC002
+name: rds-no-encryption
+severity: high
+category: encryption
+languages: [terraform]
+description: Detects RDS instances without storage encryption
+message: "RDS instance without encryption: {code_snippet}"
+pattern:
+  type: resource
+  resource_type: aws_db_instance
+  missing_field: storage_encrypted
+  expected_value: true
+fix_template: "Add storage_encrypted = true to the RDS instance"
+education: |
+  RDS instances should have storage encryption enabled to protect data at rest.
+references:
+  - https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Overview.Encryption.html

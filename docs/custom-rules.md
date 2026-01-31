@@ -20,7 +20,9 @@ message: "Warning message shown to user"
 
 fix:
   template: |
-    # How to fix
+    # How to fix (shown as suggestion)
+  pattern: 'hashlib.md5({arg})'        # Optional: pattern to match
+  replacement: 'hashlib.sha256({arg})' # Optional: replacement
 
 education: |
   Explanation of the vulnerability
@@ -47,6 +49,58 @@ pattern:
 pattern:
   type: string
   contains: ["password", "secret"]
+```
+
+## Auto-Fix Patterns
+
+Rules can include pattern-based auto-fixes that automatically transform code.
+
+### Fix Configuration
+
+```yaml
+fix:
+  template: |
+    # Suggestion shown if pattern doesn't match
+  pattern: '{func}({arg})'
+  replacement: '{func}_safe({arg})'
+```
+
+### Placeholders
+
+| Placeholder | Matches | Example |
+|-------------|---------|---------|
+| `{var}` | Variable name | `user_id`, `data` |
+| `{func}` | Function name | `hashlib.md5`, `db.query` |
+| `{arg}` | Single argument | `password.encode()` |
+| `{args}` | Multiple arguments | `a, b, c` |
+| `{string}` | String literal | `"hello"`, `'world'` |
+| `{expr}` | Any expression | `x + y` |
+| `{num}` | Number | `1024`, `256` |
+
+### Examples
+
+**Weak hash to strong hash:**
+```yaml
+fix:
+  template: "Use hashlib.sha256() instead"
+  pattern: 'hashlib.md5({arg})'
+  replacement: 'hashlib.sha256({arg})'
+```
+
+**Insecure TLS:**
+```yaml
+fix:
+  template: "Set InsecureSkipVerify to false"
+  pattern: 'InsecureSkipVerify: true'
+  replacement: 'InsecureSkipVerify: false'
+```
+
+**Public S3 bucket:**
+```yaml
+fix:
+  template: "Use private ACL"
+  pattern: 'acl = "public-read"'
+  replacement: 'acl = "private"'
 ```
 
 ## Adding Custom Rules

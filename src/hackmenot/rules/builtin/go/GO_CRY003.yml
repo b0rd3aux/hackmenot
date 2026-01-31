@@ -1,0 +1,28 @@
+id: GO_CRY003
+name: insecure-tls
+severity: high
+category: cryptography
+languages: [go]
+description: "Detects InsecureSkipVerify set to true"
+ai_context: "AI often suggests disabling TLS verification for quick fixes which is insecure"
+
+pattern:
+  type: string
+  contains:
+    - InsecureSkipVerify
+
+message: "Insecure TLS configuration: {code_snippet}"
+
+fix:
+  template: |
+    # Remove InsecureSkipVerify: true and properly configure TLS certificates
+    # Use proper CA certificates or system root CAs
+  pattern: 'InsecureSkipVerify: true'
+  replacement: 'InsecureSkipVerify: false'
+
+education: |
+  Setting InsecureSkipVerify to true disables TLS certificate verification,
+  making connections vulnerable to man-in-the-middle attacks.
+
+references:
+  - https://pkg.go.dev/crypto/tls#Config

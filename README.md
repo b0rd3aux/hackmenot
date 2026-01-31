@@ -12,12 +12,12 @@ AI-Era Code Security Scanner - catches the vulnerabilities AI coding assistants 
 
 ## Features
 
-- **55+ Security Rules** - Purpose-built for vulnerabilities Copilot, Cursor, Claude Code introduce
+- **100+ Security Rules** - Purpose-built for vulnerabilities Copilot, Cursor, Claude Code introduce
 - **Fix, Don't Nag** - Every finding includes auto-fix suggestions
 - **Developer Education** - Explains *why* AI makes this mistake
 - **Dependency Scanning** - Detects hallucinated packages and typosquats
 - **Sub-second Scans** - Incremental scanning makes pre-commit hooks instant
-- **Zero Config** - Works immediately on Python and JavaScript/TypeScript
+- **Zero Config** - Works immediately on Python, JavaScript/TypeScript, Go, and Terraform
 
 ## Quick Start
 

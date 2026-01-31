@@ -1,0 +1,23 @@
+id: GO_NET002
+name: open-redirect
+severity: medium
+category: network
+languages: [go]
+description: Detects potential open redirect vulnerabilities
+message: "Potential open redirect: {code_snippet}"
+
+pattern:
+  type: call
+  names:
+    - http.Redirect
+    - Redirect
+
+fix:
+  template: "Validate redirect URLs against a whitelist"
+
+education: |
+  Open redirects can be used for phishing attacks.
+  Only redirect to known, trusted URLs.
+
+references:
+  - https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/11-Client-side_Testing/04-Testing_for_Client-side_URL_Redirect

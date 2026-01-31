@@ -1,0 +1,29 @@
+id: GO_INJ006
+name: template-injection
+severity: high
+category: injection
+languages: [go]
+description: "Detects potential template injection via html/template"
+ai_context: "AI often bypasses template escaping using template.HTML which is dangerous"
+
+pattern:
+  type: call
+  names:
+    - template.HTML
+    - template.JS
+    - template.CSS
+    - template.URL
+
+message: "Potential template injection: {code_snippet}"
+
+fix:
+  template: |
+    # Avoid using template.HTML with user input; let templates auto-escape:
+    # Use regular string types and let html/template handle escaping
+
+education: |
+  Using template.HTML or similar functions bypasses Go's automatic escaping.
+  Only use these functions with trusted, hardcoded content.
+
+references:
+  - https://pkg.go.dev/html/template#hdr-Security_Model

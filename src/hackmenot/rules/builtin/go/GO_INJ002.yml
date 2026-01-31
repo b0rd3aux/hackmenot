@@ -1,0 +1,29 @@
+id: GO_INJ002
+name: command-injection
+severity: critical
+category: injection
+languages: [go]
+description: "Detects potential command injection vulnerabilities using os/exec"
+ai_context: "AI often generates shell commands with user input creating command injection vulnerabilities"
+
+pattern:
+  type: call
+  names:
+    - exec.Command
+    - exec.CommandContext
+    - Command
+    - CommandContext
+
+message: "Potential command injection: {code_snippet}"
+
+fix:
+  template: |
+    # Validate and sanitize command arguments, avoid shell execution:
+    # cmd := exec.Command("ls", "-la", safeArg)  // Not: exec.Command("sh", "-c", userInput)
+
+education: |
+  Command injection occurs when user input is passed to system commands.
+  Avoid using shell execution with user input. Use exec.Command with separate arguments.
+
+references:
+  - https://owasp.org/www-community/attacks/Command_Injection

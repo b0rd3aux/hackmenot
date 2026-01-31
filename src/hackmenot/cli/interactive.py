@@ -9,6 +9,7 @@ from rich.syntax import Syntax
 
 from hackmenot.core.models import Finding
 from hackmenot.fixes.engine import FixEngine
+from hackmenot.rules.registry import RuleRegistry
 
 
 class InteractiveFixer:
@@ -22,6 +23,10 @@ class InteractiveFixer:
         """
         self.console = console or Console()
         self.engine = FixEngine()
+        # Load rules for pattern-based fixes
+        registry = RuleRegistry()
+        registry.load_all()
+        self.rules = {rule.id: rule for rule in registry.get_all_rules()}
 
     def run(
         self, findings: list[Finding], file_contents: dict[str, str]
@@ -152,9 +157,16 @@ class InteractiveFixer:
         """
         if finding.file_path in file_contents:
             source = file_contents[finding.file_path]
-            fixed = self.engine.apply_fix(source, finding)
-            if fixed is not None:
-                file_contents[finding.file_path] = fixed
+            rule = self.rules.get(finding.rule_id)
+            result = self.engine.apply_fix(source, finding, rule)
+            if result.applied:
+                # Rebuild source with the fix applied
+                lines = source.split("\n")
+                line_idx = finding.line_number - 1
+                if 0 <= line_idx < len(lines):
+                    fixed_lines = result.fixed.split("\n")
+                    lines[line_idx : line_idx + 1] = fixed_lines
+                    file_contents[finding.file_path] = "\n".join(lines)
 
 
 def apply_fixes_auto(
@@ -177,6 +189,11 @@ def apply_fixes_auto(
     result = dict(file_contents)
     total_applied = 0
 
+    # Load rules for pattern-based fixes
+    registry = RuleRegistry()
+    registry.load_all()
+    rules = {rule.id: rule for rule in registry.get_all_rules()}
+
     # Group findings by file
     findings_by_file: dict[str, list[Finding]] = {}
     for finding in findings:
@@ -187,7 +204,7 @@ def apply_fixes_auto(
 
     for file_path, file_findings in findings_by_file.items():
         if file_path in result:
-            fixed, count = engine.apply_fixes(result[file_path], file_findings)
+            fixed, count = engine.apply_fixes(result[file_path], file_findings, rules)
             result[file_path] = fixed
             total_applied += count
 

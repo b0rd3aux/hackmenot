@@ -1,6 +1,6 @@
 """Tests for core data models."""
 
-from hackmenot.core.models import Finding, Rule, ScanResult, Severity
+from hackmenot.core.models import Finding, FixConfig, Rule, ScanResult, Severity
 
 
 def test_severity_ordering():
@@ -40,11 +40,54 @@ def test_rule_creation():
         description="Missing authentication decorator",
         message="Endpoint missing auth",
         pattern={"type": "ast"},
-        fix_template="@login_required\n{original}",
+        fix=FixConfig(template="@login_required\n{original}"),
         education="AI skips auth",
     )
     assert rule.id == "AUTH001"
     assert "python" in rule.languages
+    assert rule.fix.template == "@login_required\n{original}"
+
+
+def test_fix_config_creation():
+    """Test FixConfig dataclass creation with all fields."""
+    fix = FixConfig(
+        template="Use parameterized queries",
+        pattern='db.Query("{sql}" + {var})',
+        replacement='db.Query("{sql}", {var})',
+    )
+    assert fix.template == "Use parameterized queries"
+    assert fix.pattern == 'db.Query("{sql}" + {var})'
+    assert fix.replacement == 'db.Query("{sql}", {var})'
+
+
+def test_fix_config_defaults():
+    """Test FixConfig has sensible defaults."""
+    fix = FixConfig()
+    assert fix.template == ""
+    assert fix.pattern == ""
+    assert fix.replacement == ""
+
+
+def test_rule_with_full_fix_config():
+    """Test Rule with complete FixConfig."""
+    rule = Rule(
+        id="INJ001",
+        name="sql-injection",
+        severity=Severity.CRITICAL,
+        category="injection",
+        languages=["python"],
+        description="SQL injection vulnerability",
+        message="SQL injection detected",
+        pattern={"type": "fstring"},
+        fix=FixConfig(
+            template="Use parameterized queries instead",
+            pattern='f"SELECT * FROM users WHERE id = {user_id}"',
+            replacement='cursor.execute("SELECT * FROM users WHERE id = ?", (user_id,))',
+        ),
+    )
+    assert rule.fix.template == "Use parameterized queries instead"
+    assert rule.fix.pattern != ""
+    assert rule.fix.replacement != ""
 
 
 def test_scan_result_summary():

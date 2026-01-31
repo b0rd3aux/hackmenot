@@ -14,6 +14,7 @@ from hackmenot.cli.interactive import (
     apply_fixes_auto,
     write_fixed_files,
 )
+from hackmenot.fixes.diff import DiffGenerator
 from hackmenot.core.config import ConfigLoader
 from hackmenot.core.models import ScanResult, Severity
 from hackmenot.core.scanner import Scanner
@@ -89,6 +90,16 @@ def scan(
         "--fix-interactive",
         help="Interactively apply fixes (prompt for each)",
     ),
+    dry_run: bool = typer.Option(
+        False,
+        "--dry-run",
+        help="Preview fixes without applying them (requires --fix)",
+    ),
+    diff: bool = typer.Option(
+        False,
+        "--diff",
+        help="Show unified diff output (requires --fix --dry-run)",
+    ),
     full: bool = typer.Option(
         False,
         "--full",
@@ -129,6 +140,20 @@ def scan(
     if fix and fix_interactive:
         scan_console.print(
             "Error: --fix and --fix-interactive cannot be used together"
+        )
+        raise typer.Exit(1)
+
+    # Validate --dry-run requires --fix
+    if dry_run and not fix:
+        scan_console.print(
+            "Error: --dry-run requires --fix"
+        )
+        raise typer.Exit(1)
+
+    # Validate --diff requires --dry-run
+    if diff and not dry_run:
+        scan_console.print(
+            "Error: --diff requires --dry-run"
         )
         raise typer.Exit(1)
 
@@ -248,15 +273,30 @@ def scan(
             fixer = InteractiveFixer(console=scan_console)
             modified_contents = fixer.run(result.findings, original_contents)
         else:
-            # Auto-fix mode
+            # Auto-fix mode (with optional dry-run)
             modified_contents, _ = apply_fixes_auto(
-                result.findings, original_contents, console=scan_console
+                result.findings, original_contents, console=scan_console if not dry_run else None
             )
 
-        # Write modified files back to disk
-        files_written = write_fixed_files(modified_contents, original_contents)
-        if files_written > 0:
-            scan_console.print(f"Modified {files_written} file(s)")
+        if dry_run:
+            # Preview mode: show diffs, don't write files
+            diff_gen = DiffGenerator(console=scan_console)
+            diffs = diff_gen.generate_diffs(original_contents, modified_contents)
+            if diff:
+                # Full unified diff output
+                diff_gen.print_diff(diffs)
+            else:
+                # Summary only
+                diff_gen.print_summary(diffs)
+            if diffs:
+                scan_console.print(
+                    "\n[dim]Run without --dry-run to apply these fixes.[/dim]"
+                )
+        else:
+            # Write modified files back to disk
+            files_written = write_fixed_files(modified_contents, original_contents)
+            if files_written > 0:
+                scan_console.print(f"Modified {files_written} file(s)")
 
     # Exit code based on findings
     if result.findings_at_or_above(fail_severity):

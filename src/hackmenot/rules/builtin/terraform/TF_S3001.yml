@@ -1,0 +1,21 @@
+id: TF_S3001
+name: s3-public-bucket
+severity: critical
+category: storage
+languages: [terraform]
+description: Detects S3 buckets with public ACL settings
+message: "S3 bucket has public ACL: {code_snippet}"
+pattern:
+  type: resource
+  resource_type: aws_s3_bucket
+  field: acl
+  contains: [public-read, public-read-write]
+fix:
+  template: 'Set acl = "private" or use aws_s3_bucket_public_access_block'
+  pattern: 'acl = "public-read"'
+  replacement: 'acl = "private"'
+education: |
+  Public S3 buckets can expose sensitive data to the internet.
+  Use private ACLs and enable public access blocking.
+references:
+  - https://docs.aws.amazon.com/AmazonS3/latest/userguide/access-control-block-public-access.html

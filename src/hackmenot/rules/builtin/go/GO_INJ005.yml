@@ -1,0 +1,29 @@
+id: GO_INJ005
+name: xpath-injection
+severity: high
+category: injection
+languages: [go]
+description: "Detects potential XPath injection vulnerabilities"
+ai_context: "AI often generates XPath queries without proper input sanitization"
+
+pattern:
+  type: call
+  names:
+    - xpath.Compile
+    - xpath.MustCompile
+    - SelectElement
+    - SelectElements
+
+message: "Potential XPath injection: {code_snippet}"
+
+fix:
+  template: |
+    # Use parameterized XPath queries or escape special characters:
+    # Sanitize user input before using in XPath expressions
+
+education: |
+  XPath injection occurs when user input is directly used in XPath queries.
+  Sanitize input by escaping special characters or use parameterized queries.
+
+references:
+  - https://owasp.org/www-community/attacks/XPATH_Injection

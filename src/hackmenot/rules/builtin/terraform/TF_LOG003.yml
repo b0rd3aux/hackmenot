@@ -1,0 +1,17 @@
+id: TF_LOG003
+name: alb-no-access-logs
+severity: low
+category: logging
+languages: [terraform]
+description: Detects ALB without access logs enabled
+message: "ALB missing access logs: {code_snippet}"
+pattern:
+  type: resource
+  resource_type: aws_lb
+  missing_block: access_logs
+fix_template: "Add access_logs block with enabled = true"
+education: |
+  ALB access logs help analyze traffic patterns and troubleshoot issues.
+  Enable access logs for production load balancers.
+references:
+  - https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-access-logs.html
