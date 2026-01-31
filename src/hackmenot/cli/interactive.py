@@ -143,7 +143,7 @@ class InteractiveFixer:
         self.console.print()
 
         self.console.print(
-            "[dim][a]pply  [s]kip  [A]pply all  [q]uit[/dim]"
+            "[dim]\\[a]pply  \\[s]kip  \\[A]pply all  \\[q]uit[/dim]"
         )
 
     def _apply_fix(
