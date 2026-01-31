@@ -1,0 +1,31 @@
+id: JSAU002
+name: jwt-no-verify-js
+severity: critical
+category: authentication
+languages: [javascript]
+description: "JWT token decoded without verification or with unsafe algorithms"
+ai_context: "AI may use jwt.decode() for convenience, skipping signature verification"
+
+pattern:
+  type: call
+  any:
+    - function: "jwt.decode"
+    - contains: "verify: false"
+    - contains: "algorithms"
+      value_contains: "none"
+
+message: "JWT token used without proper verification"
+
+fix:
+  template: |
+    # Always verify JWT tokens with a secret and safe algorithms:
+    # const payload = jwt.verify(token, secret, { algorithms: ['HS256'] });
+
+education: |
+  Using jwt.decode() or disabling verification allows attackers to forge tokens.
+  The 'none' algorithm bypasses signature checking entirely. Always use jwt.verify()
+  with a secret and explicitly specify allowed algorithms (HS256, RS256, etc.).
+
+references:
+  - https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/06-Session_Management_Testing/10-Testing_JSON_Web_Tokens
+  - https://auth0.com/blog/critical-vulnerabilities-in-json-web-token-libraries/
