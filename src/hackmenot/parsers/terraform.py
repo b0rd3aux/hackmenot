@@ -3,7 +3,7 @@
 from dataclasses import dataclass, field
 from io import StringIO
 from pathlib import Path
-from typing import Any
+from typing import Any, IO
 
 import hcl2
 
@@ -16,7 +16,7 @@ class TerraformResourceInfo:
 
     resource_type: str
     name: str
-    config: dict = field(default_factory=dict)
+    config: dict[str, Any] = field(default_factory=dict)
     line: int = 0
 
 
@@ -55,11 +55,6 @@ class TerraformParser(BaseParser):
     """Parser for Terraform HCL files using python-hcl2."""
 
     SUPPORTED_EXTENSIONS = {".tf", ".tfvars"}
-
-    def __init__(self) -> None:
-        """Initialize the Terraform parser."""
-        # No special setup needed - hcl2 is pure Python
-        pass
 
     def parse_file(self, file_path: Path) -> TerraformParseResult:
         """Parse a Terraform file from disk."""
@@ -101,7 +96,7 @@ class TerraformParser(BaseParser):
                 error_message=str(e),
             )
 
-    def _parse_hcl(self, file_obj: Any, suffix: str) -> TerraformParseResult:
+    def _parse_hcl(self, file_obj: IO[str], suffix: str) -> TerraformParseResult:
         """Internal method to parse HCL content.
 
         Args:
