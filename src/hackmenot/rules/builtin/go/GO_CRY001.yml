@@ -1,0 +1,28 @@
+id: GO_CRY001
+name: weak-hash-md5
+severity: medium
+category: cryptography
+languages: [go]
+description: "Detects use of weak MD5 hash algorithm"
+ai_context: "AI often suggests MD5 for hashing which is cryptographically broken"
+
+pattern:
+  type: import
+  names:
+    - crypto/md5
+    - md5
+
+message: "Weak hash algorithm MD5: {code_snippet}"
+
+fix:
+  template: |
+    # Use SHA-256 or stronger: crypto/sha256
+    # import "crypto/sha256"
+    # hash := sha256.Sum256(data)
+
+education: |
+  MD5 is cryptographically broken and should not be used for security purposes.
+  Use SHA-256 or SHA-3 for secure hashing.
+
+references:
+  - https://pkg.go.dev/crypto/sha256
