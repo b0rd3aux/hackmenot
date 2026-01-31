@@ -26,6 +26,28 @@ class Scanner:
     GO_EXTENSIONS = {".go"}
     TERRAFORM_EXTENSIONS = {".tf", ".tfvars"}
     DEFAULT_WORKERS = min(32, (os.cpu_count() or 1) + 4)
+    SKIP_DIRS = {
+        "node_modules",
+        "__pycache__",
+        ".git",
+        ".hg",
+        ".svn",
+        "venv",
+        ".venv",
+        "env",
+        ".env",
+        ".tox",
+        ".nox",
+        ".pytest_cache",
+        ".mypy_cache",
+        ".ruff_cache",
+        "dist",
+        "build",
+        ".eggs",
+        "vendor",
+        "third_party",
+        ".terraform",
+    }
 
     def __init__(
         self, cache: FileCache | None = None, config: Config | None = None
@@ -152,8 +174,18 @@ class Scanner:
                 if path.suffix in self.SUPPORTED_EXTENSIONS:
                     files.append(path)
             elif path.is_dir():
-                for ext in self.SUPPORTED_EXTENSIONS:
-                    files.extend(path.rglob(f"*{ext}"))
+                for root, dirs, filenames in os.walk(path):
+                    # Prune SKIP_DIRS in-place to prevent descending
+                    dirs[:] = [
+                        d for d in dirs
+                        if d not in self.SKIP_DIRS and not d.endswith(".egg-info")
+                    ]
+
+                    root_path = Path(root)
+                    for filename in filenames:
+                        file_path = root_path / filename
+                        if file_path.suffix in self.SUPPORTED_EXTENSIONS:
+                            files.append(file_path)
 
         # Filter out excluded paths
         if self.config.paths_exclude:
