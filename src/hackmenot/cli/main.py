@@ -8,6 +8,7 @@ import typer
 from rich.console import Console
 
 from hackmenot import __version__
+from hackmenot.cli.git import get_staged_files, is_git_repo
 from hackmenot.cli.interactive import (
     InteractiveFixer,
     apply_fixes_auto,
@@ -57,8 +58,8 @@ def main(
 
 @app.command()
 def scan(
-    paths: list[Path] = typer.Argument(
-        ...,
+    paths: list[Path] | None = typer.Argument(
+        None,
         help="Paths to scan (files or directories)",
     ),
     format: OutputFormat = typer.Option(
@@ -98,6 +99,11 @@ def scan(
         "--ci",
         help="CI-friendly output (no colors, machine-readable exit codes)",
     ),
+    staged: bool = typer.Option(
+        False,
+        "--staged",
+        help="Scan only git staged files (for pre-commit hooks)",
+    ),
     pr_comment: bool = typer.Option(
         False,
         "--pr-comment",
@@ -121,8 +127,36 @@ def scan(
         )
         raise typer.Exit(1)
 
+    # Handle --staged flag
+    if staged:
+        if not is_git_repo():
+            scan_console.print("Error: --staged requires a git repository")
+            raise typer.Exit(1)
+
+        staged_files = get_staged_files()
+        if not staged_files:
+            scan_console.print("No staged files to scan")
+            raise typer.Exit(0)
+
+        # Filter to supported extensions
+        supported_extensions = Scanner.SUPPORTED_EXTENSIONS
+        scan_paths = [
+            f for f in staged_files
+            if f.suffix in supported_extensions and f.exists()
+        ]
+
+        if not scan_paths:
+            scan_console.print("No supported files in staged changes")
+            raise typer.Exit(0)
+    else:
+        # Use provided paths
+        if not paths:
+            scan_console.print("Error: No paths provided")
+            raise typer.Exit(1)
+        scan_paths = list(paths)
+
     # Validate paths exist
-    for path in paths:
+    for path in scan_paths:
         if not path.exists():
             scan_console.print(f"Error: Path does not exist: {path}")
             raise typer.Exit(1)
@@ -137,7 +171,7 @@ def scan(
             config = config_loader.load_from_file(config_file)
         else:
             # Use current directory or first path's parent for config discovery
-            project_dir = paths[0].parent if paths[0].is_file() else paths[0]
+            project_dir = scan_paths[0].parent if scan_paths[0].is_file() else scan_paths[0]
             config = config_loader.load(project_dir)
 
         # Parse severity levels (CLI args override config)
@@ -152,7 +186,7 @@ def scan(
 
         # Run scan (bypass cache if --full is set)
         scanner = Scanner(config=config)
-        result = scanner.scan(paths, min_severity=min_severity, use_cache=not full)
+        result = scanner.scan(scan_paths, min_severity=min_severity, use_cache=not full)
 
         # Output results (before applying fixes)
         if pr_comment:
