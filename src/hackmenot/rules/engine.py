@@ -16,8 +16,22 @@ class RulesEngine:
         """Register a rule with the engine."""
         self.rules[rule.id] = rule
 
-    def check(self, parse_result: ParseResult, file_path: Path) -> list[Finding]:
-        """Check parsed code against all registered rules."""
+    def check(
+        self,
+        parse_result: ParseResult,
+        file_path: Path,
+        ignores: set[tuple[int, str]] | None = None,
+    ) -> list[Finding]:
+        """Check parsed code against all registered rules.
+
+        Args:
+            parse_result: The parsed result from a parser.
+            file_path: Path to the file being checked.
+            ignores: Optional set of (line_number, rule_id) tuples to ignore.
+
+        Returns:
+            List of findings, excluding any that match the ignores set.
+        """
         if parse_result.has_error:
             return []
 
@@ -30,6 +44,14 @@ class RulesEngine:
 
             rule_findings = self._check_rule(rule, parse_result, file_path)
             findings.extend(rule_findings)
+
+        # Filter out ignored findings
+        if ignores:
+            findings = [
+                f
+                for f in findings
+                if (f.line_number, f.rule_id) not in ignores
+            ]
 
         return findings
 
