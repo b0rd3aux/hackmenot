@@ -6,10 +6,10 @@
 
 *Catches the vulnerabilities AI coding assistants introduce—and fixes them.*
 
-[![PyPI version](https://img.shields.io/pypi/v/hackmenot?color=blue)](https://pypi.org/project/hackmenot/)
-[![Tests](https://img.shields.io/github/actions/workflow/status/b0rd3aux/hackmenot/test.yml?label=tests)](https://github.com/b0rd3aux/hackmenot/actions)
+[![Release](https://img.shields.io/github/v/release/b0rd3aux/hackmenot?color=blue)](https://github.com/b0rd3aux/hackmenot/releases)
+[![Tests](https://img.shields.io/github/actions/workflow/status/b0rd3aux/hackmenot/hackmenot.yml?label=tests)](https://github.com/b0rd3aux/hackmenot/actions)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue)](LICENSE)
-[![Python](https://img.shields.io/pypi/pyversions/hackmenot)](https://pypi.org/project/hackmenot/)
+[![Python](https://img.shields.io/badge/python-3.10+-blue)](https://www.python.org/downloads/)
 
 ![100+ Security Rules](https://img.shields.io/badge/rules-100+-green)
 ![4 Languages](https://img.shields.io/badge/languages-Python%20%7C%20JS%20%7C%20Go%20%7C%20Terraform-orange)
@@ -35,7 +35,7 @@ Get scanning in 30 seconds:
 
 ```bash
 # Install
-pip install hackmenot
+pip install git+https://github.com/b0rd3aux/hackmenot.git@v1.0.0
 
 # Scan your code
 hackmenot scan .
@@ -107,7 +107,7 @@ Native GitHub Action with SARIF support. Findings appear directly in GitHub's Se
 ## Installation
 
 ```bash
-pip install hackmenot
+pip install git+https://github.com/b0rd3aux/hackmenot.git@v1.0.0
 ```
 
 Requires Python 3.10+
