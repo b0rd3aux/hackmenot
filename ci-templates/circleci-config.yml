@@ -1,0 +1,42 @@
+# CircleCI configuration for hackmenot security scanning
+# Copy to .circleci/config.yml in your project
+
+version: 2.1
+
+executors:
+  python:
+    docker:
+      - image: cimg/python:3.11
+
+jobs:
+  hackmenot-scan:
+    executor: python
+    environment:
+      HACKMENOT_FAIL_ON: high
+    steps:
+      - checkout
+      - run:
+          name: Install hackmenot
+          command: pip install --quiet hackmenot
+      - run:
+          name: Security Scan
+          command: hackmenot scan . --ci --fail-on $HACKMENOT_FAIL_ON
+      - run:
+          name: Generate SARIF Report
+          command: hackmenot scan . --ci --format sarif > hackmenot-results.sarif
+          when: always
+      - store_artifacts:
+          path: hackmenot-results.sarif
+          destination: security-reports
+
+workflows:
+  version: 2
+  security:
+    jobs:
+      - hackmenot-scan:
+          filters:
+            branches:
+              only:
+                - main
+                - develop
+                - /feature\/.*/

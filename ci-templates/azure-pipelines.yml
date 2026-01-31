@@ -1,0 +1,48 @@
+# Azure DevOps pipeline for hackmenot security scanning
+# Copy to azure-pipelines.yml in your project root
+
+trigger:
+  branches:
+    include:
+      - main
+      - develop
+      - feature/*
+
+pr:
+  branches:
+    include:
+      - main
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  HACKMENOT_FAIL_ON: 'high'
+  pythonVersion: '3.11'
+
+stages:
+  - stage: Security
+    displayName: 'Security Scan'
+    jobs:
+      - job: HackmenotScan
+        displayName: 'hackmenot Security Scan'
+        steps:
+          - task: UsePythonVersion@0
+            inputs:
+              versionSpec: '$(pythonVersion)'
+            displayName: 'Use Python $(pythonVersion)'
+
+          - script: pip install --quiet hackmenot
+            displayName: 'Install hackmenot'
+
+          - script: hackmenot scan . --ci --fail-on $(HACKMENOT_FAIL_ON)
+            displayName: 'Run Security Scan'
+
+          - script: hackmenot scan . --ci --format sarif > $(Build.ArtifactStagingDirectory)/hackmenot-results.sarif
+            displayName: 'Generate SARIF Report'
+            condition: always()
+
+          - publish: $(Build.ArtifactStagingDirectory)/hackmenot-results.sarif
+            artifact: SecurityResults
+            displayName: 'Publish SARIF Report'
+            condition: always()
