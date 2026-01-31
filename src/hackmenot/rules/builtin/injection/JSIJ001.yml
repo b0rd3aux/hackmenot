@@ -1,0 +1,24 @@
+id: JSIJ001
+name: eval-injection
+severity: critical
+category: injection
+languages: [javascript]
+description: "Dangerous use of eval() or Function constructor"
+ai_context: "AI often uses eval() for dynamic code which is dangerous"
+
+pattern:
+  type: call
+  names: ["eval", "Function"]
+
+message: "Dangerous use of eval() or Function constructor detected"
+
+fix:
+  template: |
+    # Avoid eval(). Use JSON.parse() for JSON, or refactor to avoid dynamic code.
+
+education: |
+  eval() executes arbitrary JavaScript code. If user input reaches eval(),
+  attackers can execute any code in your application context.
+
+references:
+  - https://owasp.org/www-community/attacks/Code_Injection

@@ -1,0 +1,29 @@
+id: JSCR002
+name: deprecated-crypto-functions
+severity: high
+category: cryptography
+languages: [javascript]
+description: "Use of deprecated crypto functions (createCipher/createDecipher)"
+ai_context: "AI often suggests deprecated createCipher instead of createCipheriv which requires an IV"
+
+pattern:
+  type: call
+  names: ["createCipher", "createDecipher"]
+
+message: "createCipher/createDecipher are deprecated due to weak key derivation"
+
+fix:
+  template: |
+    # Use createCipheriv/createDecipheriv with a proper IV:
+    # const iv = crypto.randomBytes(16);
+    # const cipher = crypto.createCipheriv('aes-256-gcm', key, iv);
+
+education: |
+  createCipher and createDecipher are deprecated because they derive the key using
+  MD5 without a salt, making them vulnerable to dictionary attacks.
+  Use createCipheriv and createDecipheriv with a random initialization vector.
+  Always use authenticated encryption modes like GCM or CCM.
+
+references:
+  - https://nodejs.org/api/crypto.html#cryptocreatecipherivalgorithm-key-iv-options
+  - https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/09-Testing_for_Weak_Cryptography/04-Testing_for_Weak_Encryption

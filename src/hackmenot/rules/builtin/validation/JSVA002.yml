@@ -1,0 +1,32 @@
+id: JSVA002
+name: regex-dos
+severity: medium
+category: validation
+languages: [javascript]
+description: "Regular expression vulnerable to ReDoS (catastrophic backtracking)"
+ai_context: "AI often generates regex patterns with nested quantifiers that can cause exponential backtracking"
+
+pattern:
+  type: regex
+  contains: ["(.*)*", "(a+)+", "(\\w+)+", "(\\s+)+", "(\\d+)+", "(.+)+"]
+
+message: "Regex pattern may be vulnerable to ReDoS due to nested quantifiers"
+
+fix:
+  template: |
+    # Avoid nested quantifiers - refactor the regex:
+    # Bad:  /(a+)+/
+    # Good: /a+/
+    # Or use atomic groups / possessive quantifiers if available
+    # Consider using a regex timeout or safe-regex library
+
+education: |
+  Regular Expression Denial of Service (ReDoS) occurs when regex patterns
+  with nested quantifiers cause exponential backtracking. Attackers can craft
+  input that takes extremely long to process, causing service unavailability.
+  AI assistants frequently generate vulnerable patterns when trying to match
+  "one or more" of "one or more" characters.
+
+references:
+  - https://owasp.org/www-community/attacks/Regular_expression_Denial_of_Service_-_ReDoS
+  - https://www.regular-expressions.info/catastrophic.html

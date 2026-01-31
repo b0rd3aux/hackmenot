@@ -1,0 +1,30 @@
+id: JSIJ003
+name: command-injection
+severity: critical
+category: injection
+languages: [javascript]
+description: "Command injection via child_process exec/spawn with shell option"
+ai_context: "AI often uses exec() or spawn with shell:true for convenience, enabling command injection"
+
+pattern:
+  type: call
+  names: ["exec", "execSync", "spawn"]
+  context: ["shell: true", "shell:true"]
+
+message: "Possible command injection: using exec/spawn with shell option"
+
+fix:
+  template: |
+    # Use execFile or spawn without shell option:
+    # const { execFile } = require('child_process');
+    # execFile('ls', ['-la', directory], callback);
+
+education: |
+  Using exec(), execSync(), or spawn with shell:true passes commands through
+  the shell, enabling command injection if user input is included. Use execFile
+  or spawn without the shell option to execute commands safely with arguments
+  as an array.
+
+references:
+  - https://owasp.org/www-community/attacks/Command_Injection
+  - https://nodejs.org/api/child_process.html

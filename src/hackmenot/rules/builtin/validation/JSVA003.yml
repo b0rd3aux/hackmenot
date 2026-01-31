@@ -1,0 +1,34 @@
+id: JSVA003
+name: path-traversal
+severity: high
+category: validation
+languages: [javascript]
+description: "Potential path traversal vulnerability through unvalidated file paths"
+ai_context: "AI often uses path.join or path.resolve with user input without proper validation"
+
+pattern:
+  type: string
+  contains: ["path.join", "path.resolve", "../", "..\\"]
+
+message: "Potential path traversal - validate and sanitize file paths from user input"
+
+fix:
+  template: |
+    # Validate the resolved path stays within allowed directory:
+    const path = require('path');
+    const baseDir = '/safe/base/directory';
+    const userPath = path.resolve(baseDir, userInput);
+    if (!userPath.startsWith(baseDir)) {
+      throw new Error('Path traversal attempt detected');
+    }
+
+education: |
+  Path traversal attacks occur when user-controlled input is used to construct
+  file paths without proper validation. Attackers can use "../" sequences to
+  escape intended directories and access sensitive files. AI assistants often
+  generate code that directly concatenates or joins user input into file paths
+  without checking if the result stays within the allowed directory.
+
+references:
+  - https://owasp.org/www-community/attacks/Path_Traversal
+  - https://portswigger.net/web-security/file-path-traversal

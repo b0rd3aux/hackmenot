@@ -1,0 +1,30 @@
+id: JSIJ004
+name: vm-code-injection
+severity: critical
+category: injection
+languages: [javascript]
+description: "Code injection via Node.js vm module"
+ai_context: "AI may use vm module to run dynamic code, which can lead to sandbox escapes and code injection"
+
+pattern:
+  type: call
+  names: ["vm.runInContext", "vm.runInNewContext", "vm.runInThisContext"]
+
+message: "Possible code injection via vm module - vm sandbox can be escaped"
+
+fix:
+  template: |
+    # The vm module is NOT a security mechanism. Consider alternatives:
+    # - Use isolated-vm for true sandboxing
+    # - Avoid running dynamic code entirely
+    # - Use a proper sandboxed environment like a container
+
+education: |
+  The Node.js vm module provides a way to run code in V8 contexts, but it is
+  NOT a security sandbox. Code running in vm contexts can escape and access
+  the main process. If user input reaches vm.runIn* functions, attackers can
+  execute arbitrary code with full process privileges.
+
+references:
+  - https://nodejs.org/api/vm.html#vm-executing-javascript
+  - https://github.com/nicklasb/node-vm-escape

@@ -1,0 +1,26 @@
+id: XSS001
+name: innerhtml-injection
+severity: high
+category: xss
+languages: [javascript]
+description: "Direct assignment to innerHTML or outerHTML"
+ai_context: "AI often uses innerHTML for simplicity but it enables XSS"
+
+pattern:
+  type: string
+  contains: [".innerHTML", ".outerHTML", "insertAdjacentHTML"]
+
+message: "Direct DOM manipulation with innerHTML can lead to XSS"
+
+fix:
+  template: |
+    # Use textContent for text, or sanitize HTML:
+    # element.textContent = userInput;
+    # Or use DOMPurify: element.innerHTML = DOMPurify.sanitize(html);
+
+education: |
+  innerHTML parses and executes any HTML including script tags.
+  Use textContent for plain text or sanitize with DOMPurify.
+
+references:
+  - https://owasp.org/www-community/attacks/xss/

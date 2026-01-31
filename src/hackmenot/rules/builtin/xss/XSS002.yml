@@ -1,0 +1,29 @@
+id: XSS002
+name: dangerously-set-inner-html
+severity: high
+category: xss
+languages: [javascript]
+description: "Use of React's dangerouslySetInnerHTML"
+ai_context: "AI may use dangerouslySetInnerHTML for rendering HTML content, but it bypasses React's XSS protection"
+
+pattern:
+  type: string
+  contains: ["dangerouslySetInnerHTML"]
+
+message: "dangerouslySetInnerHTML bypasses React's XSS protection and can lead to XSS vulnerabilities"
+
+fix:
+  template: |
+    # Avoid dangerouslySetInnerHTML when possible.
+    # If HTML rendering is required, sanitize first:
+    # import DOMPurify from 'dompurify';
+    # <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(html) }} />
+
+education: |
+  React's dangerouslySetInnerHTML is named that way for a reason - it's dangerous.
+  It bypasses React's built-in XSS protection and directly sets innerHTML.
+  Always sanitize user input with DOMPurify or similar before using it.
+
+references:
+  - https://react.dev/reference/react-dom/components/common#dangerously-setting-the-inner-html
+  - https://owasp.org/www-community/attacks/xss/

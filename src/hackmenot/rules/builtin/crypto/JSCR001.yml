@@ -1,0 +1,25 @@
+id: JSCR001
+name: math-random-security
+severity: high
+category: cryptography
+languages: [javascript]
+description: "Math.random() used for security-sensitive operations"
+ai_context: "AI often uses Math.random() for tokens but it's not cryptographically secure"
+
+pattern:
+  type: call
+  names: ["Math.random"]
+
+message: "Math.random() is not cryptographically secure"
+
+fix:
+  template: |
+    # Use crypto.randomBytes() or crypto.getRandomValues():
+    # const token = crypto.randomBytes(32).toString('hex');
+
+education: |
+  Math.random() is predictable and not suitable for security purposes.
+  Use the crypto module for generating secure random values.
+
+references:
+  - https://owasp.org/www-community/vulnerabilities/Insecure_Randomness
