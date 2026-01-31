@@ -1,0 +1,22 @@
+id: GO_CON001
+name: data-race
+severity: medium
+category: concurrency
+languages: [go]
+description: Detects potential data race conditions with shared variables
+message: "Potential data race: {code_snippet}"
+
+pattern:
+  type: string
+  contains:
+    - go func
+    - go func()
+
+fix_template: "Use sync.Mutex, sync.RWMutex, or channels to synchronize access"
+
+education: |
+  Data races occur when multiple goroutines access shared data without synchronization.
+  Use mutexes or channels to prevent concurrent access.
+
+references:
+  - https://go.dev/doc/articles/race_detector
