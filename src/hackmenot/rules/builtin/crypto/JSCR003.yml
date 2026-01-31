@@ -1,0 +1,32 @@
+id: JSCR003
+name: hardcoded-crypto-key-iv
+severity: high
+category: cryptography
+languages: [javascript]
+description: "Hardcoded cryptographic key or initialization vector (IV)"
+ai_context: "AI often generates example code with hardcoded keys/IVs that get copied into production"
+
+pattern:
+  type: string
+  contains: ["Buffer.from", "0x", "key", "iv", "secret"]
+
+message: "Hardcoded cryptographic key or IV detected"
+
+fix:
+  template: |
+    # Generate keys securely and store them in environment variables:
+    # const key = Buffer.from(process.env.ENCRYPTION_KEY, 'hex');
+    # const iv = crypto.randomBytes(16);
+
+education: |
+  Hardcoding cryptographic keys or initialization vectors in source code is dangerous:
+  - Keys in source code can be extracted from version control history
+  - Hardcoded IVs break the security guarantees of encryption modes
+  - AI-generated code often includes placeholder keys that look realistic
+
+  Keys should be stored securely (environment variables, key management systems)
+  and IVs should be randomly generated for each encryption operation.
+
+references:
+  - https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/09-Testing_for_Weak_Cryptography/01-Testing_for_Weak_Transport_Layer_Security
+  - https://cwe.mitre.org/data/definitions/321.html
