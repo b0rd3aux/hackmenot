@@ -1,11 +1,13 @@
 """Rules engine for matching patterns against parsed code."""
 
 from pathlib import Path
-from typing import Union
+from typing import Any, Union
 
 from hackmenot.core.models import Finding, Rule
 from hackmenot.parsers.base import ParseResult
+from hackmenot.parsers.golang import GoParseResult
 from hackmenot.parsers.javascript import JSParseResult
+from hackmenot.parsers.terraform import TerraformParseResult
 
 
 class RulesEngine:
@@ -46,6 +48,10 @@ class RulesEngine:
 
             if language == "javascript" and isinstance(parse_result, JSParseResult):
                 rule_findings = self._check_js_rule(rule, parse_result, file_path)
+            elif language == "go" and isinstance(parse_result, GoParseResult):
+                rule_findings = self._check_go_rule(rule, parse_result, str(file_path))
+            elif language == "terraform" and isinstance(parse_result, TerraformParseResult):
+                rule_findings = self._check_terraform_rule(rule, parse_result, str(file_path))
             else:
                 rule_findings = self._check_rule(rule, parse_result, file_path)
             findings.extend(rule_findings)
@@ -74,6 +80,9 @@ class RulesEngine:
             ".tsx": "javascript",  # TSX is also treated as JavaScript
             ".mjs": "javascript",
             ".cjs": "javascript",
+            ".go": "go",
+            ".tf": "terraform",
+            ".tfvars": "terraform",
         }
         return ext_map.get(file_path.suffix.lower(), "unknown")
 
@@ -304,5 +313,177 @@ class RulesEngine:
                             education=rule.education,
                         )
                     )
+
+        return findings
+
+    def _create_finding(
+        self,
+        rule: Rule,
+        file_path: str,
+        line: int,
+        column: int,
+        code_snippet: str,
+    ) -> Finding:
+        """Helper to create a Finding from a rule match."""
+        return Finding(
+            rule_id=rule.id,
+            rule_name=rule.name,
+            severity=rule.severity,
+            message=rule.message,
+            file_path=file_path,
+            line_number=line,
+            column=column,
+            code_snippet=code_snippet,
+            fix_suggestion=rule.fix_template,
+            education=rule.education,
+        )
+
+    def _check_go_rule(
+        self,
+        rule: Rule,
+        parse_result: Any,
+        file_path: str,
+    ) -> list[Finding]:
+        """Check a Go rule against parse result."""
+        findings = []
+        pattern = rule.pattern
+        pattern_type = pattern.get("type", "")
+
+        if pattern_type == "call":
+            names = [n.upper() for n in pattern.get("names", [])]
+            for call in parse_result.get_calls():
+                if any(name in call.name.upper() for name in names):
+                    findings.append(self._create_finding(
+                        rule=rule,
+                        file_path=file_path,
+                        line=call.line,
+                        column=call.column,
+                        code_snippet=call.name,
+                    ))
+
+        elif pattern_type == "string":
+            contains = [c.upper() for c in pattern.get("contains", [])]
+            # Check assignments
+            for assign in parse_result.get_assignments():
+                combined = f"{assign.target} {assign.value}".upper()
+                if any(c in combined for c in contains):
+                    findings.append(self._create_finding(
+                        rule=rule,
+                        file_path=file_path,
+                        line=assign.line,
+                        column=assign.column,
+                        code_snippet=f"{assign.target} = {assign.value}",
+                    ))
+            # Check string literals
+            for string in parse_result.get_strings():
+                if any(c in string.value.upper() for c in contains):
+                    findings.append(self._create_finding(
+                        rule=rule,
+                        file_path=file_path,
+                        line=string.line,
+                        column=string.column,
+                        code_snippet=string.value,
+                    ))
+
+        elif pattern_type == "import":
+            names = [n.lower() for n in pattern.get("names", [])]
+            for imp in parse_result.get_imports():
+                if any(name in imp.lower() for name in names):
+                    findings.append(self._create_finding(
+                        rule=rule,
+                        file_path=file_path,
+                        line=1,
+                        column=0,
+                        code_snippet=f'import "{imp}"',
+                    ))
+
+        return findings
+
+    def _check_terraform_rule(
+        self,
+        rule: Rule,
+        parse_result: Any,
+        file_path: str,
+    ) -> list[Finding]:
+        """Check a Terraform rule against parse result."""
+        findings = []
+        pattern = rule.pattern
+        pattern_type = pattern.get("type", "")
+
+        if pattern_type == "resource":
+            resource_type = pattern.get("resource_type", "")
+            for resource in parse_result.resources:
+                if resource.resource_type != resource_type:
+                    continue
+
+                # Check field contains
+                field = pattern.get("field")
+                contains = pattern.get("contains", [])
+                if field and contains:
+                    field_value = str(resource.config.get(field, ""))
+                    if any(c in field_value for c in contains):
+                        findings.append(self._create_finding(
+                            rule=rule,
+                            file_path=file_path,
+                            line=resource.line,
+                            column=0,
+                            code_snippet=f'{resource.resource_type}.{resource.name}',
+                        ))
+
+                # Check missing block
+                missing_block = pattern.get("missing_block")
+                if missing_block:
+                    if missing_block not in resource.config:
+                        findings.append(self._create_finding(
+                            rule=rule,
+                            file_path=file_path,
+                            line=resource.line,
+                            column=0,
+                            code_snippet=f'{resource.resource_type}.{resource.name}',
+                        ))
+
+                # Check missing field with expected value
+                missing_field = pattern.get("missing_field")
+                expected_value = pattern.get("expected_value")
+                if missing_field is not None:
+                    actual = resource.config.get(missing_field)
+                    if actual != expected_value:
+                        findings.append(self._create_finding(
+                            rule=rule,
+                            file_path=file_path,
+                            line=resource.line,
+                            column=0,
+                            code_snippet=f'{resource.resource_type}.{resource.name}',
+                        ))
+
+        elif pattern_type == "variable":
+            name_contains = [n.lower() for n in pattern.get("name_contains", [])]
+            has_default = pattern.get("has_default", False)
+
+            for var in parse_result.variables:
+                name_matches = any(c in var.name.lower() for c in name_contains)
+                default_matches = has_default and var.default is not None
+
+                if name_matches and default_matches:
+                    findings.append(self._create_finding(
+                        rule=rule,
+                        file_path=file_path,
+                        line=var.line,
+                        column=0,
+                        code_snippet=f'variable "{var.name}"',
+                    ))
+
+        elif pattern_type == "local":
+            name_contains = [n.lower() for n in pattern.get("name_contains", [])]
+
+            for local in parse_result.locals:
+                if any(c in local.name.lower() for c in name_contains):
+                    findings.append(self._create_finding(
+                        rule=rule,
+                        file_path=file_path,
+                        line=local.line,
+                        column=0,
+                        code_snippet=f'local.{local.name}',
+                    ))
 
         return findings
