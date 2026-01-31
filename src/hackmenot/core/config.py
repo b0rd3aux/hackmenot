@@ -60,6 +60,24 @@ class ConfigLoader:
 
         return self._dict_to_config(merged)
 
+    def load_from_file(self, config_path: Path) -> Config:
+        """Load configuration from a specific file path.
+
+        Args:
+            config_path: Path to the config file.
+
+        Returns:
+            Config loaded from the file.
+
+        Raises:
+            FileNotFoundError: If the config file does not exist.
+        """
+        if not config_path.exists():
+            raise FileNotFoundError(f"Config file not found: {config_path}")
+
+        data = self._parse_yaml(config_path)
+        return self._dict_to_config(data)
+
     def _load_from_dir(self, directory: Path) -> dict[str, Any] | None:
         """Load config from a directory.
 
