@@ -1,0 +1,18 @@
+id: TF_IAM003
+name: iam-admin-policy
+severity: critical
+category: iam
+languages: [terraform]
+description: Detects attachment of AdministratorAccess policy
+message: "AdministratorAccess policy attached: {code_snippet}"
+pattern:
+  type: resource
+  resource_type: aws_iam_role_policy_attachment
+  field: policy_arn
+  contains: [AdministratorAccess]
+fix_template: "Use a more restrictive policy with specific permissions"
+education: |
+  AdministratorAccess grants full access to all AWS services.
+  Create custom policies with minimum required permissions.
+references:
+  - https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html
