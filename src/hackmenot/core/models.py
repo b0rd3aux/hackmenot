@@ -23,6 +23,15 @@ class Severity(IntEnum):
 
 
 @dataclass(frozen=True)
+class FixConfig:
+    """Configuration for automatic fixes."""
+
+    template: str = ""  # Suggestion text for the user
+    pattern: str = ""  # Pattern to match vulnerable code
+    replacement: str = ""  # Replacement with placeholders
+
+
+@dataclass(frozen=True)
 class Finding:
     """A security finding in scanned code."""
 
@@ -52,7 +61,7 @@ class Rule:
     description: str
     message: str
     pattern: dict[str, Any]
-    fix_template: str = ""
+    fix: FixConfig = field(default_factory=FixConfig)
     education: str = ""
     references: list[str] = field(default_factory=list)
 

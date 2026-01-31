@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-from hackmenot.core.models import Rule, Severity
+from hackmenot.core.models import FixConfig, Rule, Severity
 from hackmenot.parsers.python import PythonParser
 from hackmenot.rules.engine import RulesEngine
 
@@ -22,7 +22,7 @@ def test_engine_can_register_rule():
             "type": "fstring",
             "contains": ["SELECT", "INSERT", "UPDATE", "DELETE", "FROM", "WHERE"],
         },
-        fix_template="Use parameterized queries instead",
+        fix=FixConfig(template="Use parameterized queries instead"),
         education=(
             "AI often generates SQL queries using f-strings for simplicity, "
             "but this is vulnerable to SQL injection."
@@ -49,7 +49,7 @@ def test_engine_can_check_file(fixtures_dir: Path):
             "type": "fstring",
             "contains": ["SELECT", "INSERT", "UPDATE", "DELETE", "FROM", "WHERE"],
         },
-        fix_template="Use parameterized queries instead",
+        fix=FixConfig(template="Use parameterized queries instead"),
         education=(
             "AI often generates SQL queries using f-strings for simplicity, "
             "but this is vulnerable to SQL injection."
@@ -84,7 +84,7 @@ def test_engine_returns_empty_for_clean_code(tmp_path: Path):
             "type": "fstring",
             "contains": ["SELECT", "INSERT", "UPDATE", "DELETE", "FROM", "WHERE"],
         },
-        fix_template="Use parameterized queries instead",
+        fix=FixConfig(template="Use parameterized queries instead"),
         education=(
             "AI often generates SQL queries using f-strings for simplicity, "
             "but this is vulnerable to SQL injection."

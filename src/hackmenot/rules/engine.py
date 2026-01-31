@@ -121,7 +121,7 @@ class RulesEngine:
                             line_number=fstring.line_number,
                             column=fstring.column,
                             code_snippet=f'f"{fstring.value}"',
-                            fix_suggestion=rule.fix_template,
+                            fix_suggestion=rule.fix.template,
                             education=rule.education,
                         )
                     )
@@ -158,7 +158,7 @@ class RulesEngine:
                             line_number=func.line_number,
                             column=func.column,
                             code_snippet=f"def {func.name}(...):",
-                            fix_suggestion=rule.fix_template,
+                            fix_suggestion=rule.fix.template,
                             education=rule.education,
                         )
                     )
@@ -207,7 +207,7 @@ class RulesEngine:
                             line_number=call.line_number,
                             column=call.column,
                             code_snippet=source_snippet,
-                            fix_suggestion=rule.fix_template,
+                            fix_suggestion=rule.fix.template,
                             education=rule.education,
                         )
                     )
@@ -236,7 +236,7 @@ class RulesEngine:
                         line_number=template.line_number,
                         column=template.column,
                         code_snippet=f"`{template.value[:50]}{'...' if len(template.value) > 50 else ''}`",
-                        fix_suggestion=rule.fix_template,
+                        fix_suggestion=rule.fix.template,
                         education=rule.education,
                     )
                 )
@@ -260,7 +260,7 @@ class RulesEngine:
                         line_number=assignment.line_number,
                         column=assignment.column,
                         code_snippet=f"{assignment.name} = {value_preview}{value_suffix}",
-                        fix_suggestion=rule.fix_template,
+                        fix_suggestion=rule.fix.template,
                         education=rule.education,
                     )
                 )
@@ -279,7 +279,7 @@ class RulesEngine:
                             line_number=jsx_elem.line_number,
                             column=jsx_elem.column,
                             code_snippet=f"<{jsx_elem.name} {attr[:50]}{'...' if len(attr) > 50 else ''}>",
-                            fix_suggestion=rule.fix_template,
+                            fix_suggestion=rule.fix.template,
                             education=rule.education,
                         )
                     )
@@ -309,7 +309,7 @@ class RulesEngine:
                             line_number=template.line_number,
                             column=template.column,
                             code_snippet=f"`{template.value[:50]}{'...' if len(template.value) > 50 else ''}`",
-                            fix_suggestion=rule.fix_template,
+                            fix_suggestion=rule.fix.template,
                             education=rule.education,
                         )
                     )
@@ -334,7 +334,7 @@ class RulesEngine:
             line_number=line,
             column=column,
             code_snippet=code_snippet,
-            fix_suggestion=rule.fix_template,
+            fix_suggestion=rule.fix.template,
             education=rule.education,
         )
 

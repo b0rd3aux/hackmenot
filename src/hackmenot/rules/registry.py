@@ -5,7 +5,7 @@ from pathlib import Path
 
 import yaml
 
-from hackmenot.core.models import Rule, Severity
+from hackmenot.core.models import FixConfig, Rule, Severity
 
 
 class RuleRegistry:
@@ -44,7 +44,33 @@ class RuleRegistry:
             print(f"Warning: Failed to load rule {file_path}: {e}")
 
     def _parse_rule(self, data: dict) -> Rule:
-        """Parse rule data into Rule object."""
+        """Parse rule data into Rule object.
+
+        Supports both old and new YAML formats:
+        - Old: fix_template: "Use parameterized queries"
+        - New: fix:
+                 template: "Use parameterized queries"
+                 pattern: 'db.Query("{sql}" + {var})'
+                 replacement: 'db.Query("{sql}", {var})'
+        """
+        # Handle fix configuration (backward compatible)
+        fix_data = data.get("fix")
+        fix_template = data.get("fix_template", "")
+
+        if isinstance(fix_data, dict):
+            # New format: fix is a dict with template, pattern, replacement
+            fix = FixConfig(
+                template=fix_data.get("template", ""),
+                pattern=fix_data.get("pattern", ""),
+                replacement=fix_data.get("replacement", ""),
+            )
+        elif fix_template:
+            # Old format: fix_template is a string
+            fix = FixConfig(template=fix_template)
+        else:
+            # No fix specified
+            fix = FixConfig()
+
         return Rule(
             id=data["id"],
             name=data["name"],
@@ -54,7 +80,7 @@ class RuleRegistry:
             description=data.get("description", ""),
             message=data["message"],
             pattern=data.get("pattern", {}),
-            fix_template=data.get("fix", {}).get("template", ""),
+            fix=fix,
             education=data.get("education", ""),
             references=data.get("references", []),
         )

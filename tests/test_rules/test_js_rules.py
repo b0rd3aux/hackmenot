@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-from hackmenot.core.models import Rule, Severity
+from hackmenot.core.models import FixConfig, Rule, Severity
 from hackmenot.parsers.javascript import JavaScriptParser
 from hackmenot.parsers.python import PythonParser
 from hackmenot.rules.engine import RulesEngine
@@ -26,7 +26,7 @@ def test_engine_checks_js_call_pattern(tmp_path: Path):
             "type": "call",
             "names": ["eval"],
         },
-        fix_template="Use safer alternatives like JSON.parse() for data parsing",
+        fix=FixConfig(template="Use safer alternatives like JSON.parse() for data parsing"),
         education="eval() executes arbitrary JavaScript code and should be avoided.",
     )
     engine.register_rule(rule)
@@ -67,7 +67,7 @@ def test_engine_checks_js_template_pattern(tmp_path: Path):
             "type": "fstring",
             "contains": ["SELECT", "INSERT", "UPDATE", "DELETE", "FROM", "WHERE"],
         },
-        fix_template="Use parameterized queries instead",
+        fix=FixConfig(template="Use parameterized queries instead"),
         education="Template literals with SQL can be vulnerable to injection.",
     )
     engine.register_rule(rule)
@@ -104,7 +104,7 @@ def test_engine_checks_js_string_pattern(tmp_path: Path):
             "type": "string",
             "contains": ["secret", "password", "apikey"],
         },
-        fix_template="Use environment variables for secrets",
+        fix=FixConfig(template="Use environment variables for secrets"),
         education="Hardcoded secrets can be exposed in source control.",
     )
     engine.register_rule(rule)
