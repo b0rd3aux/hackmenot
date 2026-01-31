@@ -1,0 +1,18 @@
+id: TF_SG001
+name: sg-open-ingress
+severity: critical
+category: network
+languages: [terraform]
+description: Detects security groups with open ingress to 0.0.0.0/0
+message: "Security group allows ingress from 0.0.0.0/0: {code_snippet}"
+pattern:
+  type: resource
+  resource_type: aws_security_group
+  field: ingress
+  contains: ["0.0.0.0/0"]
+fix_template: "Restrict ingress to specific IP ranges or security groups"
+education: |
+  Allowing ingress from 0.0.0.0/0 opens the resource to the entire internet.
+  Restrict access to known IP ranges or other security groups.
+references:
+  - https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html

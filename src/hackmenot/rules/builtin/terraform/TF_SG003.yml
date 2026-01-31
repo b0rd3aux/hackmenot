@@ -1,0 +1,18 @@
+id: TF_SG003
+name: sg-unrestricted-port
+severity: high
+category: network
+languages: [terraform]
+description: Detects security groups with SSH or RDP open to the internet
+message: "Security group has unrestricted SSH/RDP access: {code_snippet}"
+pattern:
+  type: resource
+  resource_type: aws_security_group_rule
+  field: cidr_blocks
+  contains: ["0.0.0.0/0"]
+fix_template: "Restrict SSH (22) and RDP (3389) to known IP addresses or use a bastion host"
+education: |
+  Exposing SSH or RDP to the internet increases attack surface.
+  Use bastion hosts or VPN for secure access.
+references:
+  - https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/authorizing-access-to-an-instance.html
