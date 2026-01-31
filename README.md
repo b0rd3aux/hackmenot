@@ -6,7 +6,8 @@
 
 *Catches the vulnerabilities AI coding assistants introduce—and fixes them.*
 
-[![Release](https://img.shields.io/github/v/release/b0rd3aux/hackmenot?color=blue)](https://github.com/b0rd3aux/hackmenot/releases)
+[![PyPI](https://img.shields.io/pypi/v/hackmenot?color=blue)](https://pypi.org/project/hackmenot/)
+[![Docker](https://img.shields.io/badge/docker-ghcr.io-blue)](https://github.com/b0rd3aux/hackmenot/pkgs/container/hackmenot)
 [![Tests](https://img.shields.io/github/actions/workflow/status/b0rd3aux/hackmenot/hackmenot.yml?label=tests)](https://github.com/b0rd3aux/hackmenot/actions)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.10+-blue)](https://www.python.org/downloads/)
@@ -34,8 +35,11 @@ hackmenot is purpose-built for the AI era: it detects these vulnerabilities, pro
 Get scanning in 30 seconds:
 
 ```bash
-# Install
-pip install git+https://github.com/b0rd3aux/hackmenot.git@v1.0.0
+# Install via pip
+pip install hackmenot
+
+# Or with Docker
+docker pull ghcr.io/b0rd3aux/hackmenot:latest
 
 # Scan your code
 hackmenot scan .
@@ -106,6 +110,21 @@ Native GitHub Action with SARIF support. Findings appear directly in GitHub's Se
 
 ## Installation
 
+**pip (recommended)**
+```bash
+pip install hackmenot
+```
+
+**Docker**
+```bash
+# Pull image
+docker pull ghcr.io/b0rd3aux/hackmenot:latest
+
+# Scan current directory
+docker run --rm -v $(pwd):/workspace ghcr.io/b0rd3aux/hackmenot scan .
+```
+
+**From source**
 ```bash
 pip install git+https://github.com/b0rd3aux/hackmenot.git@v1.0.0
 ```

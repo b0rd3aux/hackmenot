@@ -98,6 +98,7 @@ class InteractiveFixer:
                 else:  # "s"
                     self.console.print("[dim]Skipped[/dim]")
 
+        self.console.print("\n[bold green]Done![/bold green] Interactive fix mode complete.")
         return result
 
     def _show_finding(

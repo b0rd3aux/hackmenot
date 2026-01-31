@@ -63,34 +63,79 @@ class FixEngine:
 
         # Fall back to template-based fix (if rule provided)
         if rule and rule.fix.template:
+            template = rule.fix.template.strip()
             indent = len(original_line) - len(original_line.lstrip())
-            fixed_line = " " * indent + rule.fix.template.lstrip()
-            lines[line_idx] = fixed_line
-            return FixResult(
-                applied=True,
-                original=original_line,
-                fixed=fixed_line,
-                reason="success",
+            indent_str = " " * indent
+
+            # Check if template is guidance-only (all lines are comments)
+            template_lines = template.split("\n")
+            is_guidance_only = all(
+                line.strip().startswith("#") or line.strip().startswith("//") or not line.strip()
+                for line in template_lines
             )
+
+            if is_guidance_only:
+                # Add guidance as comment above the line, keep original code
+                guidance_lines = [indent_str + line.lstrip() for line in template_lines]
+                fixed_content = "\n".join(guidance_lines) + "\n" + original_line
+                lines[line_idx] = fixed_content
+                return FixResult(
+                    applied=True,
+                    original=original_line,
+                    fixed=fixed_content,
+                    reason="success",
+                )
+            else:
+                # Template is actual code replacement
+                fixed_line = indent_str + template.lstrip()
+                lines[line_idx] = fixed_line
+                return FixResult(
+                    applied=True,
+                    original=original_line,
+                    fixed=fixed_line,
+                    reason="success",
+                )
 
         # Fall back to finding.fix_suggestion (legacy behavior)
         if finding.fix_suggestion:
+            suggestion = finding.fix_suggestion.strip()
             indent = len(original_line) - len(original_line.lstrip())
             indent_str = original_line[:indent]
 
-            # Apply fix with proper indentation
-            fix_lines = [
-                indent_str + line.lstrip() if line.strip() else line
-                for line in finding.fix_suggestion.split("\n")
-            ]
-
-            lines[line_idx : line_idx + 1] = fix_lines
-            return FixResult(
-                applied=True,
-                original=original_line,
-                fixed="\n".join(fix_lines),
-                reason="success",
+            # Check if suggestion is guidance-only (all lines are comments)
+            suggestion_lines = suggestion.split("\n")
+            is_guidance_only = all(
+                line.strip().startswith("#") or line.strip().startswith("//") or not line.strip()
+                for line in suggestion_lines
             )
+
+            if is_guidance_only:
+                # Add guidance as comment above the line, keep original code
+                guidance_lines = [
+                    indent_str + line.lstrip() if line.strip() else line
+                    for line in suggestion_lines
+                ]
+                fixed_content = "\n".join(guidance_lines) + "\n" + original_line
+                lines[line_idx : line_idx + 1] = [fixed_content]
+                return FixResult(
+                    applied=True,
+                    original=original_line,
+                    fixed=fixed_content,
+                    reason="success",
+                )
+            else:
+                # Apply fix with proper indentation (replaces original)
+                fix_lines = [
+                    indent_str + line.lstrip() if line.strip() else line
+                    for line in suggestion_lines
+                ]
+                lines[line_idx : line_idx + 1] = fix_lines
+                return FixResult(
+                    applied=True,
+                    original=original_line,
+                    fixed="\n".join(fix_lines),
+                    reason="success",
+                )
 
         return FixResult(applied=False, reason="no_fix_defined")
 

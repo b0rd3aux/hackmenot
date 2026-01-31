@@ -4,24 +4,26 @@ build-backend = "hatchling.build"
 
 [project]
 name = "hackmenot"
-version = "0.1.0"
-description = "AI-Era Code Security Scanner"
+version = "1.0.0"
+description = "AI-Era Code Security Scanner - catches vulnerabilities AI coding assistants introduce"
 readme = "README.md"
 license = "Apache-2.0"
-requires-python = ">=3.11"
+requires-python = ">=3.10"
 authors = [
-    { name = "hackmenot team" }
+    { name = "b0rd3aux" }
 ]
-keywords = ["security", "scanner", "ai", "code-analysis", "sast"]
+keywords = ["security", "scanner", "ai", "code-analysis", "sast", "vulnerability", "copilot", "cursor", "claude"]
 classifiers = [
-    "Development Status :: 3 - Alpha",
+    "Development Status :: 4 - Beta",
     "Environment :: Console",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Topic :: Security",
     "Topic :: Software Development :: Quality Assurance",
+    "Topic :: Software Development :: Testing",
 ]
 
 dependencies = [
@@ -46,8 +48,10 @@ dev = [
 hackmenot = "hackmenot.cli.main:app"
 
 [project.urls]
-Homepage = "https://github.com/hackmenot/hackmenot"
-Repository = "https://github.com/hackmenot/hackmenot"
+Homepage = "https://github.com/b0rd3aux/hackmenot"
+Repository = "https://github.com/b0rd3aux/hackmenot"
+Documentation = "https://github.com/b0rd3aux/hackmenot/tree/main/docs"
+Issues = "https://github.com/b0rd3aux/hackmenot/issues"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/hackmenot"]
@@ -64,13 +68,13 @@ include = [
 
 [tool.ruff]
 line-length = 100
-target-version = "py311"
+target-version = "py310"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "N", "W", "UP"]
 
 [tool.mypy]
-python_version = "3.11"
+python_version = "3.10"
 strict = true
 warn_return_any = true
 warn_unused_ignores = true
