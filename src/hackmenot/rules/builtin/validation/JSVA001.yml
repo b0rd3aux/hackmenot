@@ -1,0 +1,26 @@
+id: JSVA001
+name: prototype-pollution
+severity: high
+category: validation
+languages: [javascript]
+description: "Potential prototype pollution vulnerability"
+ai_context: "AI often uses dynamic property access which can lead to prototype pollution"
+
+pattern:
+  type: string
+  contains: ["__proto__", "constructor.prototype", "Object.assign"]
+
+message: "Potential prototype pollution through dynamic property access"
+
+fix:
+  template: |
+    # Validate property names or use Object.create(null):
+    # const obj = Object.create(null);
+    # Or check: if (key === '__proto__') return;
+
+education: |
+  Prototype pollution allows attackers to modify Object.prototype,
+  affecting all objects in the application.
+
+references:
+  - https://portswigger.net/web-security/prototype-pollution

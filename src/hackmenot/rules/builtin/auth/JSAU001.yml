@@ -1,0 +1,25 @@
+id: JSAU001
+name: hardcoded-secret-js
+severity: high
+category: authentication
+languages: [javascript]
+description: "Hardcoded API key, secret, or password in JavaScript"
+ai_context: "AI often hardcodes secrets for quick prototyping"
+
+pattern:
+  type: string
+  contains: ["apiKey", "api_key", "secret", "password", "passwd", "API_KEY", "SECRET_KEY"]
+
+message: "Hardcoded secret or API key detected"
+
+fix:
+  template: |
+    # Use environment variables:
+    # const apiKey = process.env.API_KEY;
+
+education: |
+  Hardcoded secrets can be extracted from source code, version control,
+  or bundled JavaScript files. Always use environment variables.
+
+references:
+  - https://owasp.org/www-community/vulnerabilities/Use_of_hard-coded_password

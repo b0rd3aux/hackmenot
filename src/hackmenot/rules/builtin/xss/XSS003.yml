@@ -1,0 +1,29 @@
+id: XSS003
+name: document-write
+severity: medium
+category: xss
+languages: [javascript]
+description: "Use of document.write or document.writeln"
+ai_context: "AI may use document.write for quick DOM manipulation, but it's a legacy method that enables XSS"
+
+pattern:
+  type: string
+  contains: ["document.write", "document.writeln"]
+
+message: "document.write/writeln can lead to XSS and is a deprecated practice"
+
+fix:
+  template: |
+    # Replace document.write with safer DOM methods:
+    # const element = document.createElement('div');
+    # element.textContent = content;
+    # document.body.appendChild(element);
+
+education: |
+  document.write and document.writeln are legacy methods that directly write to the document.
+  They can overwrite the entire page if called after page load, and they allow XSS attacks
+  when used with untrusted input. Use modern DOM manipulation methods instead.
+
+references:
+  - https://developer.mozilla.org/en-US/docs/Web/API/Document/write
+  - https://owasp.org/www-community/attacks/xss/

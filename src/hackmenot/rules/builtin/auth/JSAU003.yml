@@ -1,0 +1,36 @@
+id: JSAU003
+name: insecure-cookie-js
+severity: medium
+category: authentication
+languages: [javascript]
+description: "Cookie set without secure or httpOnly flags"
+ai_context: "AI often omits security flags when setting cookies for simplicity"
+
+pattern:
+  type: call
+  any:
+    - function: "res.cookie"
+      missing_option: ["secure", "httpOnly"]
+    - function: "document.cookie"
+    - contains: "Set-Cookie"
+      missing: ["Secure", "HttpOnly"]
+
+message: "Cookie set without secure or httpOnly flags"
+
+fix:
+  template: |
+    # Set cookies with security flags:
+    # res.cookie('session', token, {
+    #   httpOnly: true,
+    #   secure: true,
+    #   sameSite: 'strict'
+    # });
+
+education: |
+  Cookies without httpOnly can be stolen via XSS attacks. Cookies without
+  the secure flag can be intercepted over unencrypted connections. Always
+  set both flags for authentication cookies, and consider sameSite for CSRF protection.
+
+references:
+  - https://owasp.org/www-community/controls/SecureCookieAttribute
+  - https://owasp.org/www-community/HttpOnly

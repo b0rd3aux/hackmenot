@@ -1,0 +1,38 @@
+id: JSVA004
+name: open-redirect
+severity: high
+category: validation
+languages: [javascript]
+description: "Potential open redirect vulnerability through unvalidated redirect URL"
+ai_context: "AI often redirects to user-supplied URLs without validation"
+
+pattern:
+  type: string
+  contains: ["res.redirect(req.query", "res.redirect(req.body", "location.href =", "window.location ="]
+
+message: "Potential open redirect - validate redirect URLs against an allowlist"
+
+fix:
+  template: |
+    # Validate redirect URL against allowlist:
+    const allowedHosts = ['example.com', 'app.example.com'];
+    const redirectUrl = new URL(userUrl, 'https://example.com');
+    if (!allowedHosts.includes(redirectUrl.hostname)) {
+      return res.redirect('/');  // Default safe redirect
+    }
+    # Or only allow relative paths:
+    if (redirectUrl.startsWith('/') && !redirectUrl.startsWith('//')) {
+      return res.redirect(redirectUrl);
+    }
+
+education: |
+  Open redirect vulnerabilities occur when an application redirects users to
+  a URL specified in user input without proper validation. Attackers exploit
+  this for phishing by creating links that appear to go to a trusted domain
+  but redirect to malicious sites. AI assistants often generate redirect code
+  that directly uses query parameters or request body values without checking
+  if the destination is safe.
+
+references:
+  - https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/11-Client-side_Testing/04-Testing_for_Client-side_URL_Redirect
+  - https://cheatsheetseries.owasp.org/cheatsheets/Unvalidated_Redirects_and_Forwards_Cheat_Sheet.html

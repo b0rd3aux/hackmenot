@@ -1,0 +1,29 @@
+id: JSIJ005
+name: nosql-injection
+severity: high
+category: injection
+languages: [javascript]
+description: "NoSQL injection via MongoDB operators in queries"
+ai_context: "AI may build MongoDB queries with user input containing operators like $where or $regex"
+
+pattern:
+  type: object
+  contains: ["$where", "$regex"]
+
+message: "Possible NoSQL injection: MongoDB operator in query may allow injection"
+
+fix:
+  template: |
+    # Sanitize input to remove MongoDB operators:
+    # const sanitize = require('mongo-sanitize');
+    # db.collection.find({ username: sanitize(userInput) });
+
+education: |
+  MongoDB queries accept operators like $where and $regex that can be exploited
+  if user input is passed directly into queries. The $where operator executes
+  JavaScript and is particularly dangerous. Always sanitize user input to remove
+  MongoDB operators or use a library like mongo-sanitize.
+
+references:
+  - https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/07-Input_Validation_Testing/05.6-Testing_for_NoSQL_Injection
+  - https://blog.websecurify.com/2014/08/hacking-nodejs-and-mongodb

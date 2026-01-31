@@ -552,3 +552,124 @@ def test_scan_mixed_file_types(tmp_path: Path):
     # Only Python file should be scanned
     assert data["files_scanned"] == 1
     assert len(data["findings"]) == 1
+
+
+# =============================================================================
+# Phase 3 JavaScript Integration Tests
+# =============================================================================
+
+
+def test_js_file_scanning_e2e(tmp_path: Path):
+    """Test JavaScript file scanning end-to-end."""
+    (tmp_path / "test.js").write_text("eval(userInput);")
+    result = runner.invoke(app, ["scan", str(tmp_path)])
+    assert "JSIJ001" in result.stdout
+
+
+def test_ts_file_scanning_e2e(tmp_path: Path):
+    """Test TypeScript file scanning works."""
+    (tmp_path / "test.ts").write_text("eval(userInput);")
+    result = runner.invoke(app, ["scan", str(tmp_path)])
+    assert "JSIJ001" in result.stdout
+
+
+def test_jsx_file_scanning_e2e(tmp_path: Path):
+    """Test JSX file scanning with React vulnerability."""
+    (tmp_path / "component.jsx").write_text(
+        'function Component() { return <div dangerouslySetInnerHTML={{__html: userInput}} />; }'
+    )
+    result = runner.invoke(app, ["scan", str(tmp_path)])
+    # Should detect XSS vulnerability via dangerouslySetInnerHTML (XSS002 rule)
+    assert "XSS002" in result.stdout
+
+
+def test_mixed_python_js_project(tmp_path: Path):
+    """Test scanning project with Python and JavaScript files."""
+    (tmp_path / "app.py").write_text('query = f"SELECT * FROM {x}"')
+    (tmp_path / "app.js").write_text("eval(input);")
+    result = runner.invoke(app, ["scan", str(tmp_path)])
+    assert "INJ001" in result.stdout  # Python
+    assert "JSIJ001" in result.stdout  # JavaScript
+
+
+def test_js_eval_detection(tmp_path: Path):
+    """Verify JSIJ001 (eval) is detected."""
+    (tmp_path / "script.js").write_text(
+        '''
+function processInput(userInput) {
+    return eval(userInput);
+}
+'''
+    )
+    result = runner.invoke(app, ["scan", str(tmp_path), "--format", "json"])
+    data = json.loads(result.stdout)
+    rule_ids = [f["rule_id"] for f in data["findings"]]
+    assert "JSIJ001" in rule_ids
+
+
+def test_js_innerhtml_detection(tmp_path: Path):
+    """Verify XSS001 (innerHTML) is detected."""
+    (tmp_path / "script.js").write_text(
+        '''
+function render(userContent) {
+    document.getElementById("output").innerHTML = userContent;
+}
+'''
+    )
+    result = runner.invoke(app, ["scan", str(tmp_path), "--format", "json"])
+    data = json.loads(result.stdout)
+    rule_ids = [f["rule_id"] for f in data["findings"]]
+    assert "XSS001" in rule_ids
+
+
+def test_js_math_random_detection(tmp_path: Path):
+    """Verify JSCR001 (Math.random) is detected."""
+    (tmp_path / "crypto.js").write_text(
+        '''
+function generateToken() {
+    return Math.random().toString(36);
+}
+'''
+    )
+    result = runner.invoke(app, ["scan", str(tmp_path), "--format", "json"])
+    data = json.loads(result.stdout)
+    rule_ids = [f["rule_id"] for f in data["findings"]]
+    assert "JSCR001" in rule_ids
+
+
+def test_js_ignores_work(tmp_path: Path):
+    """Verify inline ignores work for JS files."""
+    (tmp_path / "script.js").write_text(
+        '''// hackmenot:ignore-next-line[JSIJ001] - intentional for testing
+eval(testInput);
+'''
+    )
+    result = runner.invoke(app, ["scan", str(tmp_path)])
+    # JSIJ001 should not appear because of inline ignore
+    assert "JSIJ001" not in result.stdout
+
+
+def test_js_config_excludes(tmp_path: Path):
+    """Verify config path excludes work for JS files."""
+    # Create config with path exclusions for node_modules
+    (tmp_path / ".hackmenot.yml").write_text(
+        "paths:\n  exclude:\n    - 'node_modules/*'\n"
+    )
+
+    # Create source file (should be scanned)
+    src = tmp_path / "src"
+    src.mkdir()
+    (src / "app.js").write_text("eval(userInput);")
+
+    # Create node_modules file (should be excluded)
+    node_modules = tmp_path / "node_modules"
+    node_modules.mkdir()
+    (node_modules / "lib.js").write_text("eval(something);")
+
+    # Run scan
+    result = runner.invoke(app, ["scan", str(tmp_path)])
+
+    # Should find issue in src but not in node_modules
+    assert "JSIJ001" in result.stdout
+    assert "src/app.js" in result.stdout or "app.js" in result.stdout
+    assert "node_modules" not in result.stdout or "lib.js" not in result.stdout
