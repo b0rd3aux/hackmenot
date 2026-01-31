@@ -1,0 +1,18 @@
+id: TF_ENC001
+name: ebs-no-encryption
+severity: high
+category: encryption
+languages: [terraform]
+description: Detects EBS volumes without encryption
+message: "EBS volume without encryption: {code_snippet}"
+pattern:
+  type: resource
+  resource_type: aws_ebs_volume
+  missing_field: encrypted
+  expected_value: true
+fix_template: "Add encrypted = true to the EBS volume"
+education: |
+  EBS volumes should be encrypted at rest to protect data.
+  Enable encryption using AWS managed or customer managed keys.
+references:
+  - https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EBSEncryption.html
