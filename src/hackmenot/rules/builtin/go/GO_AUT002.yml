@@ -1,0 +1,20 @@
+id: GO_AUT002
+name: hardcoded-secret
+severity: high
+category: authentication
+languages: [go]
+description: Detects hardcoded secrets and API keys
+message: "Potential hardcoded secret: {code_snippet}"
+
+pattern:
+  type: string
+  contains: [secret, apikey, api_key, apiKey, secretkey, secret_key, secretKey]
+
+fix_template: "Use environment variables or a secrets manager"
+
+education: |
+  Hardcoded secrets can be exposed through version control or decompilation.
+  Use environment variables or dedicated secrets management.
+
+references:
+  - https://cwe.mitre.org/data/definitions/798.html

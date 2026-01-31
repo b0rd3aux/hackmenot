@@ -1,0 +1,20 @@
+id: GO_AUT001
+name: hardcoded-password
+severity: high
+category: authentication
+languages: [go]
+description: Detects hardcoded passwords in Go code
+message: "Potential hardcoded password: {code_snippet}"
+
+pattern:
+  type: string
+  contains: [password, passwd, pwd]
+
+fix_template: "Use environment variables or a secrets manager"
+
+education: |
+  Hardcoded passwords can be extracted from source code or binaries.
+  Store secrets in environment variables or a secrets management system.
+
+references:
+  - https://owasp.org/www-community/vulnerabilities/Use_of_hard-coded_password
