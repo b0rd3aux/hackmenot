@@ -1,11 +1,14 @@
 """Scanner orchestrator."""
 
+import fnmatch
 import os
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
 from hackmenot.core.cache import FileCache
+from hackmenot.core.config import Config
+from hackmenot.core.ignores import IgnoreHandler
 from hackmenot.core.models import Finding, ScanResult, Severity
 from hackmenot.parsers.python import PythonParser
 from hackmenot.rules.engine import RulesEngine
@@ -18,18 +21,23 @@ class Scanner:
     SUPPORTED_EXTENSIONS = {".py"}
     DEFAULT_WORKERS = min(32, (os.cpu_count() or 1) + 4)
 
-    def __init__(self, cache: FileCache | None = None) -> None:
+    def __init__(
+        self, cache: FileCache | None = None, config: Config | None = None
+    ) -> None:
         self.parser = PythonParser()
         self.engine = RulesEngine()
         self.cache = cache
+        self.config = config or Config()
         self._load_rules()
 
     def _load_rules(self) -> None:
-        """Load all built-in rules."""
+        """Load all built-in rules, respecting disabled rules from config."""
         registry = RuleRegistry()
         registry.load_all()
+        disabled = set(self.config.rules_disable)
         for rule in registry.get_all_rules():
-            self.engine.register_rule(rule)
+            if rule.id not in disabled:
+                self.engine.register_rule(rule)
 
     def scan(
         self,
@@ -127,7 +135,7 @@ class Scanner:
         return findings, errors
 
     def _collect_files(self, paths: list[Path]) -> list[Path]:
-        """Collect all scannable files from paths."""
+        """Collect all scannable files from paths, respecting path excludes."""
         files: list[Path] = []
 
         for path in paths:
@@ -138,7 +146,34 @@ class Scanner:
                 for ext in self.SUPPORTED_EXTENSIONS:
                     files.extend(path.rglob(f"*{ext}"))
 
+        # Filter out excluded paths
+        if self.config.paths_exclude:
+            files = [f for f in files if not self._is_excluded(f, paths)]
+
         return sorted(set(files))
+
+    def _is_excluded(self, file_path: Path, scan_roots: list[Path]) -> bool:
+        """Check if a file path matches any exclusion pattern.
+
+        Args:
+            file_path: The file path to check.
+            scan_roots: The root paths being scanned.
+
+        Returns:
+            True if the path should be excluded.
+        """
+        # Try to get relative path from any scan root
+        for root in scan_roots:
+            try:
+                relative = file_path.relative_to(root)
+                relative_str = str(relative)
+                for pattern in self.config.paths_exclude:
+                    if fnmatch.fnmatch(relative_str, pattern):
+                        return True
+            except ValueError:
+                # file_path is not relative to this root
+                continue
+        return False
 
     def _get_findings_for_file(
         self, file_path: Path, use_cache: bool
@@ -157,10 +192,22 @@ class Scanner:
         return findings
 
     def _scan_file(self, file_path: Path) -> list[Finding]:
-        """Scan a single file."""
+        """Scan a single file, respecting inline ignore comments."""
+        # Read source content for ignore parsing
+        source = file_path.read_text()
+
+        # Parse ignore comments
+        ignore_handler = IgnoreHandler()
+        ignores = ignore_handler.parse(source)
+
+        # Check for file-level ignore
+        if ignore_handler.is_file_ignored():
+            return []
+
+        # Parse the file
         parse_result = self.parser.parse_file(file_path)
 
         if parse_result.has_error:
             return []
 
-        return self.engine.check(parse_result, file_path)
+        return self.engine.check(parse_result, file_path, ignores=ignores)
