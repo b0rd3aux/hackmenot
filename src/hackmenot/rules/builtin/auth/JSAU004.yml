@@ -1,0 +1,33 @@
+id: JSAU004
+name: weak-password-hash-js
+severity: high
+category: authentication
+languages: [javascript]
+description: "Weak hash algorithm (MD5, SHA1) used for password hashing"
+ai_context: "AI may suggest simple hash functions for passwords, ignoring security requirements"
+
+pattern:
+  type: call
+  any:
+    - function: "createHash"
+      argument: ["md5", "sha1"]
+      context_contains: ["password", "passwd", "pwd"]
+    - contains: "crypto.createHash('md5')"
+    - contains: "crypto.createHash('sha1')"
+
+message: "Weak hash algorithm used for password hashing"
+
+fix:
+  template: |
+    # Use bcrypt or argon2 for password hashing:
+    # const bcrypt = require('bcrypt');
+    # const hash = await bcrypt.hash(password, 12);
+
+education: |
+  MD5 and SHA1 are cryptographically broken and too fast for password hashing.
+  Use purpose-built password hashing algorithms like bcrypt, scrypt, or Argon2
+  that include salting and configurable work factors to resist brute-force attacks.
+
+references:
+  - https://owasp.org/www-project-cheat-sheets/cheatsheets/Password_Storage_Cheat_Sheet.html
+  - https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html
