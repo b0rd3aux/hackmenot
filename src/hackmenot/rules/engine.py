@@ -1,9 +1,11 @@
 """Rules engine for matching patterns against parsed code."""
 
 from pathlib import Path
+from typing import Union
 
 from hackmenot.core.models import Finding, Rule
 from hackmenot.parsers.base import ParseResult
+from hackmenot.parsers.javascript import JSParseResult
 
 
 class RulesEngine:
@@ -18,7 +20,7 @@ class RulesEngine:
 
     def check(
         self,
-        parse_result: ParseResult,
+        parse_result: Union[ParseResult, JSParseResult],
         file_path: Path,
         ignores: set[tuple[int, str]] | None = None,
     ) -> list[Finding]:
@@ -42,7 +44,10 @@ class RulesEngine:
             if language not in rule.languages:
                 continue
 
-            rule_findings = self._check_rule(rule, parse_result, file_path)
+            if language == "javascript" and isinstance(parse_result, JSParseResult):
+                rule_findings = self._check_js_rule(rule, parse_result, file_path)
+            else:
+                rule_findings = self._check_rule(rule, parse_result, file_path)
             findings.extend(rule_findings)
 
         # Filter out ignored findings
@@ -138,6 +143,132 @@ class RulesEngine:
                             line_number=func.line_number,
                             column=func.column,
                             code_snippet=f"def {func.name}(...):",
+                            fix_suggestion=rule.fix_template,
+                            education=rule.education,
+                        )
+                    )
+
+        return findings
+
+    def _check_js_rule(
+        self, rule: Rule, parse_result: JSParseResult, file_path: Path
+    ) -> list[Finding]:
+        """Check a single rule against parsed JavaScript code."""
+        findings: list[Finding] = []
+        pattern = rule.pattern
+        pattern_type = pattern.get("type", "")
+
+        if pattern_type == "call":
+            findings.extend(self._check_js_call_pattern(rule, parse_result, file_path))
+        elif pattern_type == "string":
+            findings.extend(self._check_js_string_pattern(rule, parse_result, file_path))
+        elif pattern_type == "fstring":
+            findings.extend(self._check_js_template_pattern(rule, parse_result, file_path))
+
+        return findings
+
+    def _check_js_call_pattern(
+        self, rule: Rule, parse_result: JSParseResult, file_path: Path
+    ) -> list[Finding]:
+        """Check call patterns in JavaScript code."""
+        findings: list[Finding] = []
+        pattern = rule.pattern
+        match_names = pattern.get("names", [])
+
+        for call in parse_result.get_calls():
+            # Check if call name matches any of the patterns
+            for pattern_name in match_names:
+                if pattern_name in call.name:
+                    # Get source snippet for the call
+                    source_snippet = f"{call.name}({', '.join(call.arguments[:2])}{'...' if len(call.arguments) > 2 else ''})"
+
+                    findings.append(
+                        Finding(
+                            rule_id=rule.id,
+                            rule_name=rule.name,
+                            severity=rule.severity,
+                            message=rule.message,
+                            file_path=str(file_path),
+                            line_number=call.line_number,
+                            column=call.column,
+                            code_snippet=source_snippet,
+                            fix_suggestion=rule.fix_template,
+                            education=rule.education,
+                        )
+                    )
+                    break  # Only one finding per call
+
+        return findings
+
+    def _check_js_string_pattern(
+        self, rule: Rule, parse_result: JSParseResult, file_path: Path
+    ) -> list[Finding]:
+        """Check string patterns in JavaScript code (template literals and assignments)."""
+        findings: list[Finding] = []
+        pattern = rule.pattern
+        contains = pattern.get("contains", [])
+
+        # Check template literals
+        for template in parse_result.get_template_literals():
+            if any(kw.upper() in template.value.upper() for kw in contains):
+                findings.append(
+                    Finding(
+                        rule_id=rule.id,
+                        rule_name=rule.name,
+                        severity=rule.severity,
+                        message=rule.message,
+                        file_path=str(file_path),
+                        line_number=template.line_number,
+                        column=template.column,
+                        code_snippet=f"`{template.value[:50]}{'...' if len(template.value) > 50 else ''}`",
+                        fix_suggestion=rule.fix_template,
+                        education=rule.education,
+                    )
+                )
+
+        # Check assignments for string values
+        for assignment in parse_result.get_assignments():
+            if assignment.value and any(kw.upper() in assignment.value.upper() for kw in contains):
+                findings.append(
+                    Finding(
+                        rule_id=rule.id,
+                        rule_name=rule.name,
+                        severity=rule.severity,
+                        message=rule.message,
+                        file_path=str(file_path),
+                        line_number=assignment.line_number,
+                        column=assignment.column,
+                        code_snippet=f"{assignment.name} = {assignment.value[:50]}{'...' if assignment.value and len(assignment.value) > 50 else ''}",
+                        fix_suggestion=rule.fix_template,
+                        education=rule.education,
+                    )
+                )
+
+        return findings
+
+    def _check_js_template_pattern(
+        self, rule: Rule, parse_result: JSParseResult, file_path: Path
+    ) -> list[Finding]:
+        """Check template literal patterns with interpolation in JavaScript code."""
+        findings: list[Finding] = []
+        pattern = rule.pattern
+        contains = pattern.get("contains", [])
+
+        for template in parse_result.get_template_literals():
+            # Only flag if template has interpolation (expressions)
+            if template.expressions:
+                # Check if template contains any of the target strings
+                if any(kw.upper() in template.value.upper() for kw in contains):
+                    findings.append(
+                        Finding(
+                            rule_id=rule.id,
+                            rule_name=rule.name,
+                            severity=rule.severity,
+                            message=rule.message,
+                            file_path=str(file_path),
+                            line_number=template.line_number,
+                            column=template.column,
+                            code_snippet=f"`{template.value[:50]}{'...' if len(template.value) > 50 else ''}`",
                             fix_suggestion=rule.fix_template,
                             education=rule.education,
                         )

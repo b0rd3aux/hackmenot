@@ -10,6 +10,7 @@ from hackmenot.core.cache import FileCache
 from hackmenot.core.config import Config
 from hackmenot.core.ignores import IgnoreHandler
 from hackmenot.core.models import Finding, ScanResult, Severity
+from hackmenot.parsers.javascript import JavaScriptParser
 from hackmenot.parsers.python import PythonParser
 from hackmenot.rules.engine import RulesEngine
 from hackmenot.rules.registry import RuleRegistry
@@ -18,13 +19,15 @@ from hackmenot.rules.registry import RuleRegistry
 class Scanner:
     """Main scanner that orchestrates parsing and rule checking."""
 
-    SUPPORTED_EXTENSIONS = {".py"}
+    SUPPORTED_EXTENSIONS = {".py", ".js", ".ts", ".mjs", ".cjs", ".jsx", ".tsx"}
+    JS_EXTENSIONS = {".js", ".ts", ".mjs", ".cjs", ".jsx", ".tsx"}
     DEFAULT_WORKERS = min(32, (os.cpu_count() or 1) + 4)
 
     def __init__(
         self, cache: FileCache | None = None, config: Config | None = None
     ) -> None:
         self.parser = PythonParser()
+        self.js_parser = JavaScriptParser()
         self.engine = RulesEngine()
         self.cache = cache
         self.config = config or Config()
@@ -191,6 +194,19 @@ class Scanner:
 
         return findings
 
+    def _detect_language(self, file_path: Path) -> str:
+        """Detect the language of a file based on its extension.
+
+        Args:
+            file_path: The file path to check.
+
+        Returns:
+            "python" or "javascript" based on the file extension.
+        """
+        if file_path.suffix in self.JS_EXTENSIONS:
+            return "javascript"
+        return "python"
+
     def _scan_file(self, file_path: Path) -> list[Finding]:
         """Scan a single file, respecting inline ignore comments."""
         # Read source content for ignore parsing
@@ -204,10 +220,18 @@ class Scanner:
         if ignore_handler.is_file_ignored():
             return []
 
-        # Parse the file
-        parse_result = self.parser.parse_file(file_path)
+        # Detect language and use appropriate parser
+        language = self._detect_language(file_path)
 
-        if parse_result.has_error:
-            return []
-
-        return self.engine.check(parse_result, file_path, ignores=ignores)
+        if language == "javascript":
+            # Parse JavaScript/TypeScript file
+            parse_result = self.js_parser.parse_file(file_path)
+            if parse_result.has_error:
+                return []
+            return self.engine.check(parse_result, file_path, ignores=ignores)
+        else:
+            # Parse Python file
+            parse_result = self.parser.parse_file(file_path)
+            if parse_result.has_error:
+                return []
+            return self.engine.check(parse_result, file_path, ignores=ignores)
