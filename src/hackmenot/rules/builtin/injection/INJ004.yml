@@ -1,0 +1,31 @@
+id: INJ004
+name: ssrf-request
+severity: high
+category: injection
+languages: [python]
+description: "Server-Side Request Forgery via user-controlled URL"
+ai_context: "AI assistants often construct URLs using f-strings with user input, enabling SSRF attacks"
+
+pattern:
+  type: fstring
+  contains: ["requests.get", "requests.post", "requests.put", "requests.delete", "requests.patch", "urllib", "http://", "https://"]
+
+message: "Possible SSRF: HTTP request URL built with f-string interpolation"
+
+fix:
+  template: |
+    # Validate and allowlist URLs:
+    # from urllib.parse import urlparse
+    # ALLOWED_HOSTS = ["api.example.com", "trusted.service.com"]
+    # parsed = urlparse(user_url)
+    # if parsed.hostname not in ALLOWED_HOSTS:
+    #     raise ValueError("URL not in allowlist")
+
+education: |
+  Server-Side Request Forgery (SSRF) occurs when an attacker can control the URL
+  that a server-side application fetches. This can be used to access internal services,
+  cloud metadata endpoints (169.254.169.254), or perform port scanning.
+  Always validate URLs against an allowlist of trusted hosts.
+
+references:
+  - https://owasp.org/www-community/attacks/Server_Side_Request_Forgery

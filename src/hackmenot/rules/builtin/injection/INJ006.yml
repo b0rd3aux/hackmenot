@@ -1,0 +1,32 @@
+id: INJ006
+name: unsafe-eval-exec
+severity: critical
+category: injection
+languages: [python]
+description: "Code execution via eval() or exec()"
+ai_context: "AI assistants sometimes use eval() or exec() for dynamic code execution, creating severe code injection risks"
+
+pattern:
+  type: call
+  contains: ["eval(", "exec("]
+
+message: "Critical: eval() or exec() detected - potential arbitrary code execution"
+
+fix:
+  template: |
+    # Avoid eval() and exec() entirely. Use safer alternatives:
+    # - For math expressions: use ast.literal_eval() or a math parser
+    # - For JSON: use json.loads()
+    # - For configuration: use structured formats (YAML, TOML, JSON)
+    # import ast
+    # result = ast.literal_eval(user_input)  # Only for literals
+
+education: |
+  eval() and exec() execute arbitrary Python code, making them extremely dangerous
+  when used with any user-controlled input. Attackers can execute any Python code,
+  including importing modules, accessing the filesystem, or running shell commands.
+  Use ast.literal_eval() for safe evaluation of Python literals, or use structured
+  data formats like JSON for data interchange.
+
+references:
+  - https://owasp.org/www-community/attacks/Code_Injection
