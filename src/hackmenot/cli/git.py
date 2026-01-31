@@ -44,3 +44,25 @@ def is_git_repo() -> bool:
         return True
     except subprocess.CalledProcessError:
         return False
+
+
+def get_changed_files(since: str) -> list[Path]:
+    """Get list of files changed since a specific commit/ref.
+
+    Args:
+        since: A git ref (commit SHA, branch name, tag, etc.)
+
+    Returns:
+        List of Path objects for changed files.
+    """
+    try:
+        result = subprocess.run(
+            ["git", "diff", "--name-only", since, "HEAD"],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        files = [Path(f) for f in result.stdout.strip().split("\n") if f]
+        return files
+    except subprocess.CalledProcessError:
+        return []

@@ -8,7 +8,7 @@ import typer
 from rich.console import Console
 
 from hackmenot import __version__
-from hackmenot.cli.git import get_staged_files, is_git_repo
+from hackmenot.cli.git import get_changed_files, get_staged_files, is_git_repo
 from hackmenot.cli.interactive import (
     InteractiveFixer,
     apply_fixes_auto,
@@ -115,6 +115,11 @@ def scan(
         "--staged",
         help="Scan only git staged files (for pre-commit hooks)",
     ),
+    changed_since: str | None = typer.Option(
+        None,
+        "--changed-since",
+        help="Only scan files changed since this git ref (commit, branch, tag)",
+    ),
     pr_comment: bool = typer.Option(
         False,
         "--pr-comment",
@@ -140,6 +145,13 @@ def scan(
     if fix and fix_interactive:
         scan_console.print(
             "Error: --fix and --fix-interactive cannot be used together"
+        )
+        raise typer.Exit(1)
+
+    # Validate --staged and --changed-since are mutually exclusive
+    if staged and changed_since:
+        scan_console.print(
+            "Error: --staged and --changed-since cannot be used together"
         )
         raise typer.Exit(1)
 
@@ -177,6 +189,27 @@ def scan(
 
         if not scan_paths:
             scan_console.print("No supported files in staged changes")
+            raise typer.Exit(0)
+    # Handle --changed-since flag
+    elif changed_since:
+        if not is_git_repo():
+            scan_console.print("Error: --changed-since requires a git repository")
+            raise typer.Exit(1)
+
+        changed_files = get_changed_files(changed_since)
+        if not changed_files:
+            scan_console.print(f"No files changed since {changed_since}")
+            raise typer.Exit(0)
+
+        # Filter to supported extensions and existing files
+        supported_extensions = Scanner.SUPPORTED_EXTENSIONS
+        scan_paths = [
+            f for f in changed_files
+            if f.suffix in supported_extensions and f.exists()
+        ]
+
+        if not scan_paths:
+            scan_console.print("No supported files in changes")
             raise typer.Exit(0)
     else:
         # Use provided paths
