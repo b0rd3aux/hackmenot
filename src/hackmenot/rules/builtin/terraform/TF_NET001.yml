@@ -1,0 +1,18 @@
+id: TF_NET001
+name: public-subnet
+severity: medium
+category: network
+languages: [terraform]
+description: Detects subnets with automatic public IP assignment
+message: "Subnet assigns public IPs automatically: {code_snippet}"
+pattern:
+  type: resource
+  resource_type: aws_subnet
+  field: map_public_ip_on_launch
+  contains: ["True"]
+fix_template: "Set map_public_ip_on_launch = false for private subnets"
+education: |
+  Automatic public IP assignment can expose instances to the internet.
+  Use NAT gateways for private subnet internet access.
+references:
+  - https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Scenario2.html

@@ -1,0 +1,17 @@
+id: TF_NET002
+name: missing-nacl
+severity: low
+category: network
+languages: [terraform]
+description: Detects subnets that may be using default NACL
+message: "Subnet may be using default NACL: {code_snippet}"
+pattern:
+  type: resource
+  resource_type: aws_subnet
+  missing_block: network_acl_id
+fix_template: "Explicitly associate a custom NACL with the subnet"
+education: |
+  Custom NACLs provide an additional layer of security beyond security groups.
+  Consider defining explicit NACL rules for sensitive subnets.
+references:
+  - https://docs.aws.amazon.com/vpc/latest/userguide/vpc-network-acls.html

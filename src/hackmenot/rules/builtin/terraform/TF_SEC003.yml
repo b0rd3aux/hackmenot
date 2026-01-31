@@ -1,0 +1,17 @@
+id: TF_SEC003
+name: hardcoded-aws-key
+severity: critical
+category: secrets
+languages: [terraform]
+description: Detects hardcoded AWS access keys
+message: "Potential hardcoded AWS key: {code_snippet}"
+pattern:
+  type: variable
+  name_contains: [aws_access, aws_secret, access_key, secret_key]
+  has_default: true
+fix_template: "Use IAM roles, environment variables, or AWS credentials file"
+education: |
+  AWS credentials should never be hardcoded in Terraform files.
+  Use IAM roles for EC2/ECS or environment variables.
+references:
+  - https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-envvars.html

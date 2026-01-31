@@ -1,0 +1,17 @@
+id: TF_SEC001
+name: hardcoded-secret
+severity: critical
+category: secrets
+languages: [terraform]
+description: Detects hardcoded secrets in variable defaults
+message: "Potential hardcoded secret: {code_snippet}"
+pattern:
+  type: variable
+  name_contains: [secret, api_key, apikey, auth, private]
+  has_default: true
+fix_template: "Remove default value and use environment variables or Terraform Vault provider"
+education: |
+  Hardcoded secrets in Terraform can be exposed through state files or version control.
+  Use environment variables or a secrets manager.
+references:
+  - https://developer.hashicorp.com/terraform/tutorials/configuration-language/sensitive-variables
