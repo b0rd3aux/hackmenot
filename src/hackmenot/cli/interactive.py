@@ -152,9 +152,15 @@ class InteractiveFixer:
         """
         if finding.file_path in file_contents:
             source = file_contents[finding.file_path]
-            fixed = self.engine.apply_fix(source, finding)
-            if fixed is not None:
-                file_contents[finding.file_path] = fixed
+            result = self.engine.apply_fix(source, finding)
+            if result.applied:
+                # Rebuild source with the fix applied
+                lines = source.split("\n")
+                line_idx = finding.line_number - 1
+                if 0 <= line_idx < len(lines):
+                    fixed_lines = result.fixed.split("\n")
+                    lines[line_idx : line_idx + 1] = fixed_lines
+                    file_contents[finding.file_path] = "\n".join(lines)
 
 
 def apply_fixes_auto(
