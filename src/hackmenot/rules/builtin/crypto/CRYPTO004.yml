@@ -1,0 +1,32 @@
+id: CRYPTO004
+name: aes-ecb-mode
+severity: high
+category: cryptography
+languages: [python]
+description: "Use of AES in ECB mode"
+ai_context: "AI may suggest ECB mode as it's simpler, but ECB leaks patterns in encrypted data"
+
+pattern:
+  type: fstring
+  contains: ["MODE_ECB", "AES.MODE_ECB", "mode=AES.MODE_ECB"]
+
+message: "AES ECB mode is insecure as it leaks patterns in the plaintext"
+
+fix:
+  template: |
+    # Use CBC, GCM, or another secure mode:
+    # from Crypto.Cipher import AES
+    # cipher = AES.new(key, AES.MODE_GCM, nonce=nonce)
+    # or
+    # cipher = AES.new(key, AES.MODE_CBC, iv=iv)
+
+education: |
+  ECB (Electronic Codebook) mode encrypts identical plaintext blocks to identical
+  ciphertext blocks, revealing patterns in the data. This is famously demonstrated
+  by the ECB penguin image. AI often suggests ECB mode because it's simpler (no IV needed)
+  and appears in many basic examples in training data.
+  Use GCM mode for authenticated encryption or CBC mode with proper IV handling.
+
+references:
+  - https://blog.filippo.io/the-ecb-penguin/
+  - https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/09-Testing_for_Weak_Cryptography/04-Testing_for_Weak_Encryption
