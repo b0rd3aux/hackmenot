@@ -1,0 +1,17 @@
+id: TF_S3004
+name: s3-no-logging
+severity: low
+category: storage
+languages: [terraform]
+description: Detects S3 buckets without access logging
+message: "S3 bucket missing access logging: {code_snippet}"
+pattern:
+  type: resource
+  resource_type: aws_s3_bucket
+  missing_block: logging
+fix_template: "Add logging { target_bucket = ... } block"
+education: |
+  Access logging helps monitor and audit S3 bucket access.
+  Enable logging for compliance and security monitoring.
+references:
+  - https://docs.aws.amazon.com/AmazonS3/latest/userguide/ServerLogs.html

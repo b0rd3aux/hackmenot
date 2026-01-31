@@ -1,0 +1,17 @@
+id: TF_S3003
+name: s3-no-versioning
+severity: medium
+category: storage
+languages: [terraform]
+description: Detects S3 buckets without versioning enabled
+message: "S3 bucket missing versioning: {code_snippet}"
+pattern:
+  type: resource
+  resource_type: aws_s3_bucket
+  missing_block: versioning
+fix_template: "Add versioning { enabled = true } block"
+education: |
+  Versioning protects against accidental deletion and enables recovery.
+  Enable versioning for important S3 buckets.
+references:
+  - https://docs.aws.amazon.com/AmazonS3/latest/userguide/Versioning.html
