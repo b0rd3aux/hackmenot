@@ -1,0 +1,35 @@
+id: EXP004
+name: stack-trace-in-response
+severity: medium
+category: exposure
+languages: [python]
+description: "Stack trace returned in HTTP response"
+ai_context: "AI includes traceback in responses for debugging but this exposes internal details"
+
+pattern:
+  type: call
+  contains: ["traceback.format_exc", "traceback.print_exc", "traceback.format_exception"]
+  context: ["return", "response", "Response", "jsonify", "json.dumps"]
+
+message: "Stack trace may be exposed in response - log internally but return generic error to users"
+
+fix:
+  template: |
+    # Log the traceback internally, return generic error:
+    # import logging
+    # logger = logging.getLogger(__name__)
+    # try:
+    #     ...
+    # except Exception:
+    #     logger.exception("Internal error occurred")
+    #     return {"error": "An internal error occurred"}, 500
+
+education: |
+  AI assistants often include traceback.format_exc() in API responses for easier
+  debugging. However, stack traces reveal internal implementation details, file paths,
+  library versions, and potentially sensitive data. Always log stack traces internally
+  and return only generic error messages to users.
+
+references:
+  - https://owasp.org/www-community/Improper_Error_Handling
+  - https://cwe.mitre.org/data/definitions/209.html

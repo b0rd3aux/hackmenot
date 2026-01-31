@@ -1,0 +1,31 @@
+id: VAL003
+name: type-confusion
+severity: low
+category: validation
+languages: [python]
+description: "Type-specific operation without isinstance() check"
+ai_context: "AI assumes input types are correct and performs type-specific operations without validation, leading to type confusion bugs"
+
+pattern:
+  type: call
+  contains: [".items()", ".keys()", ".values()", ".split()", ".strip()", ".lower()", ".upper()"]
+
+message: "Type-specific method called without isinstance() check - validate type before operations"
+
+fix:
+  template: |
+    # Add type validation before type-specific operations:
+    if not isinstance(data, dict):
+        raise TypeError("Expected dict, got " + type(data).__name__)
+    for key, value in data.items():
+        process(key, value)
+
+education: |
+  AI coding assistants often assume input data is the expected type and directly
+  call type-specific methods. When user-controlled data is involved, an attacker
+  could provide unexpected types (e.g., a list instead of a string) causing
+  AttributeError crashes or unexpected behavior. Always use isinstance() to
+  validate types before performing type-specific operations.
+
+references:
+  - https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/07-Input_Validation_Testing/

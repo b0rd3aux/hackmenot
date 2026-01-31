@@ -1,0 +1,29 @@
+id: VAL001
+name: missing-input-length-check
+severity: medium
+category: validation
+languages: [python]
+description: "User input from request.form/args used without length validation"
+ai_context: "AI often generates code that processes form inputs directly without checking input length, leading to potential DoS or buffer issues"
+
+pattern:
+  type: call
+  contains: ["request.form", "request.args"]
+
+message: "User input used without length validation - add len() check to prevent oversized input"
+
+fix:
+  template: |
+    # Add length validation before processing:
+    user_input = request.form.get("field")
+    if not user_input or len(user_input) > MAX_LENGTH:
+        return abort(400, "Invalid input length")
+
+education: |
+  AI coding assistants often generate code that reads user input directly without
+  validating its length. This can lead to denial of service attacks where attackers
+  send extremely large inputs to exhaust server memory or cause processing delays.
+  Always validate input length before processing.
+
+references:
+  - https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/07-Input_Validation_Testing/

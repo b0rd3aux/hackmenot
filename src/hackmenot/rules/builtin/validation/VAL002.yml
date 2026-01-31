@@ -1,0 +1,32 @@
+id: VAL002
+name: regex-dos-redos
+severity: medium
+category: validation
+languages: [python]
+description: "Regular expression with nested quantifiers vulnerable to ReDoS"
+ai_context: "AI generates regex patterns with nested quantifiers like (a+)+ that cause exponential backtracking on malicious input"
+
+pattern:
+  type: call
+  contains: ["re.compile", "re.match", "re.search", "re.findall"]
+
+message: "Regex pattern may be vulnerable to ReDoS - avoid nested quantifiers like (a+)+ or (a|b)*"
+
+fix:
+  template: |
+    # Use atomic groups or possessive quantifiers if available
+    # Or set a timeout on regex operations:
+    import regex
+    regex.match(pattern, text, timeout=1.0)
+    # Or use simpler patterns without nested quantifiers
+
+education: |
+  AI coding tools often generate complex regex patterns without considering
+  performance implications. Patterns with nested quantifiers (like (a+)+, (a*)*,
+  or (a|aa)+) can cause catastrophic backtracking, where processing time grows
+  exponentially with input length. Attackers can exploit this with crafted inputs
+  to cause denial of service. Use atomic groups, possessive quantifiers, or
+  the 'regex' library with timeouts.
+
+references:
+  - https://owasp.org/www-community/attacks/Regular_expression_Denial_of_Service_-_ReDoS
