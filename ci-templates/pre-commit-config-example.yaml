@@ -1,0 +1,14 @@
+# Example .pre-commit-config.yaml for using hackmenot
+# Copy to your project root as .pre-commit-config.yaml
+
+repos:
+  - repo: https://github.com/hackmenot/hackmenot
+    rev: v0.1.0  # Use the latest version
+    hooks:
+      - id: hackmenot
+        # Scan staged files on commit (fast)
+        args: ['--fail-on', 'high']
+
+      # Uncomment for full scan on push:
+      # - id: hackmenot-all
+      #   args: ['--fail-on', 'critical']
