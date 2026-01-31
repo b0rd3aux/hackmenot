@@ -1,0 +1,38 @@
+// Jenkinsfile for hackmenot security scanning
+// Copy to your project root or reference from Jenkins pipeline configuration
+
+pipeline {
+    agent {
+        docker {
+            image 'python:3.11-slim'
+        }
+    }
+
+    environment {
+        HACKMENOT_FAIL_ON = 'high'
+    }
+
+    stages {
+        stage('Install') {
+            steps {
+                sh 'pip install --quiet hackmenot'
+            }
+        }
+
+        stage('Security Scan') {
+            steps {
+                sh 'hackmenot scan . --ci --fail-on ${HACKMENOT_FAIL_ON}'
+            }
+        }
+    }
+
+    post {
+        always {
+            sh 'hackmenot scan . --ci --format sarif > hackmenot-results.sarif || true'
+            archiveArtifacts artifacts: 'hackmenot-results.sarif', allowEmptyArchive: true
+        }
+        failure {
+            echo 'Security vulnerabilities found!'
+        }
+    }
+}
