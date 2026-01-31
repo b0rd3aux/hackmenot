@@ -1,0 +1,29 @@
+id: AUTH003
+name: hardcoded-password-in-variable
+severity: high
+category: authentication
+languages: [python]
+description: "Hardcoded password or secret assigned to variable"
+ai_context: "AI often generates example code with placeholder passwords that developers forget to replace"
+
+pattern:
+  type: assignment
+  contains: ["password =", "passwd =", "secret =", "pwd ="]
+
+message: "Hardcoded password detected in variable assignment"
+
+fix:
+  template: |
+    # Use environment variables instead:
+    import os
+    password = os.environ.get("PASSWORD")
+    # Or use a secrets manager
+
+education: |
+  AI assistants frequently generate code with hardcoded passwords like
+  password = "admin123" or secret = "changeme". These credentials can be
+  extracted from source code or version control history. Always retrieve
+  sensitive values from environment variables or a dedicated secrets manager.
+
+references:
+  - https://owasp.org/Top10/A07_2021-Identification_and_Authentication_Failures/

@@ -1,0 +1,32 @@
+id: AUTH006
+name: jwt-none-algorithm
+severity: critical
+category: authentication
+languages: [python]
+description: "JWT decoded without verification or with 'none' algorithm"
+ai_context: "AI generates JWT code that skips signature verification for brevity, creating auth bypass vulnerabilities"
+
+pattern:
+  type: call
+  contains: ["jwt.decode", "verify=False", 'algorithms=["none"]', "algorithms=['none']"]
+
+message: "JWT signature verification is disabled or allows 'none' algorithm"
+
+fix:
+  template: |
+    # Always verify JWT signatures with explicit algorithms:
+    jwt.decode(
+        token,
+        secret_key,
+        algorithms=["HS256"],  # Specify allowed algorithms explicitly
+        options={"verify_signature": True}
+    )
+
+education: |
+  AI-generated JWT code often includes verify=False or allows the 'none'
+  algorithm, creating critical authentication bypasses. The 'none' algorithm
+  attack lets attackers forge tokens without knowing the secret. Always
+  specify explicit allowed algorithms and ensure signature verification.
+
+references:
+  - https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/06-Session_Management_Testing/10-Testing_JSON_Web_Tokens
