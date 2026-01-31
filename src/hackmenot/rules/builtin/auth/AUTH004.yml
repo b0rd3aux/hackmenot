@@ -1,0 +1,29 @@
+id: AUTH004
+name: weak-session-configuration
+severity: medium
+category: authentication
+languages: [python]
+description: "Session cookie configured without secure flags"
+ai_context: "AI tends to generate minimal Flask/Django config, omitting security settings for cookies"
+
+pattern:
+  type: assignment
+  contains: ["SESSION_COOKIE_SECURE = False", "SESSION_COOKIE_HTTPONLY = False", "PERMANENT_SESSION_LIFETIME"]
+
+message: "Insecure session configuration detected"
+
+fix:
+  template: |
+    # Enable secure session settings:
+    SESSION_COOKIE_SECURE = True  # Only send over HTTPS
+    SESSION_COOKIE_HTTPONLY = True  # Prevent JavaScript access
+    SESSION_COOKIE_SAMESITE = 'Lax'  # Mitigate CSRF
+
+education: |
+  AI-generated Flask or Django configurations often leave security settings
+  at their defaults or explicitly disable them for "simplicity". Session cookies
+  should always have SECURE (HTTPS only), HTTPONLY (no JS access), and
+  SAMESITE attributes properly configured to prevent session hijacking and CSRF.
+
+references:
+  - https://owasp.org/www-community/controls/SecureCookieAttribute

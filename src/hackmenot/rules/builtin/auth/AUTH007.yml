@@ -1,0 +1,33 @@
+id: AUTH007
+name: insecure-cookie
+severity: medium
+category: authentication
+languages: [python]
+description: "Cookie set without secure or httponly flags"
+ai_context: "AI generates basic set_cookie calls without security flags, exposing cookies to theft"
+
+pattern:
+  type: call
+  contains: ["set_cookie", "secure=False", "httponly=False"]
+
+message: "Cookie set without secure or httponly flags"
+
+fix:
+  template: |
+    # Set cookies with security flags:
+    response.set_cookie(
+        key="session",
+        value=token,
+        secure=True,      # Only transmit over HTTPS
+        httponly=True,    # Prevent JavaScript access
+        samesite="Lax"    # Mitigate CSRF
+    )
+
+education: |
+  AI often generates set_cookie() calls with minimal parameters, omitting
+  critical security flags. Without secure=True, cookies can be intercepted
+  over HTTP. Without httponly=True, JavaScript can steal cookies via XSS.
+  Always set both flags for any security-sensitive cookies.
+
+references:
+  - https://owasp.org/www-community/controls/SecureCookieAttribute

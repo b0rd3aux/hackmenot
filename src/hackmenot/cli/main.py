@@ -8,6 +8,12 @@ import typer
 from rich.console import Console
 
 from hackmenot import __version__
+from hackmenot.cli.interactive import (
+    InteractiveFixer,
+    apply_fixes_auto,
+    write_fixed_files,
+)
+from hackmenot.core.config import ConfigLoader
 from hackmenot.core.models import ScanResult, Severity
 from hackmenot.core.scanner import Scanner
 from hackmenot.reporters.terminal import TerminalReporter
@@ -72,35 +78,108 @@ def scan(
         "--fail-on",
         help="Minimum severity to return non-zero exit code",
     ),
+    fix: bool = typer.Option(
+        False,
+        "--fix",
+        help="Automatically apply all available fixes",
+    ),
+    fix_interactive: bool = typer.Option(
+        False,
+        "--fix-interactive",
+        help="Interactively apply fixes (prompt for each)",
+    ),
+    full: bool = typer.Option(
+        False,
+        "--full",
+        help="Bypass cache, perform full scan",
+    ),
+    config_file: Path | None = typer.Option(
+        None,
+        "--config",
+        "-c",
+        help="Path to config file",
+    ),
 ) -> None:
     """Scan code for security vulnerabilities."""
+    # Validate --fix and --fix-interactive are mutually exclusive
+    if fix and fix_interactive:
+        console.print(
+            "[red]Error: --fix and --fix-interactive cannot be used together[/red]"
+        )
+        raise typer.Exit(1)
+
     # Validate paths exist
     for path in paths:
         if not path.exists():
             console.print(f"[red]Error: Path does not exist: {path}[/red]")
             raise typer.Exit(1)
 
-    # Parse severity levels
+    # Load configuration
+    config_loader = ConfigLoader()
+    if config_file is not None:
+        if not config_file.exists():
+            console.print(f"[red]Error: Config file not found: {config_file}[/red]")
+            raise typer.Exit(1)
+        config = config_loader.load_from_file(config_file)
+    else:
+        # Use current directory or first path's parent for config discovery
+        project_dir = paths[0].parent if paths[0].is_file() else paths[0]
+        config = config_loader.load(project_dir)
+
+    # Parse severity levels (CLI args override config)
     try:
         min_severity = Severity.from_string(severity)
-        fail_severity = Severity.from_string(fail_on)
+        # Use config fail_on if not explicitly set on CLI
+        effective_fail_on = fail_on if fail_on != "high" else config.fail_on
+        fail_severity = Severity.from_string(effective_fail_on)
     except KeyError as e:
         console.print(f"[red]Error: Invalid severity level: {e}[/red]")
         raise typer.Exit(1)
 
-    # Run scan
-    scanner = Scanner()
-    result = scanner.scan(paths, min_severity=min_severity)
+    # Run scan (bypass cache if --full is set)
+    scanner = Scanner(config=config)
+    result = scanner.scan(paths, min_severity=min_severity, use_cache=not full)
 
-    # Output results
+    # Output results (before applying fixes)
     if format == OutputFormat.terminal:
         reporter = TerminalReporter(console=console)
         reporter.render(result)
     elif format == OutputFormat.json:
         _output_json(result)
     elif format == OutputFormat.sarif:
-        console.print("[yellow]SARIF output not yet implemented[/yellow]")
-        _output_json(result)
+        from hackmenot.reporters.sarif import SARIFReporter
+        reporter = SARIFReporter()
+        print(reporter.render(result))
+
+    # Handle fix modes
+    if (fix or fix_interactive) and result.has_findings:
+        # Read file contents for findings
+        original_contents: dict[str, str] = {}
+        for finding in result.findings:
+            if finding.file_path not in original_contents:
+                try:
+                    original_contents[finding.file_path] = Path(
+                        finding.file_path
+                    ).read_text()
+                except OSError as e:
+                    console.print(
+                        f"[red]Error reading {finding.file_path}: {e}[/red]"
+                    )
+
+        if fix_interactive:
+            # Interactive mode
+            fixer = InteractiveFixer(console=console)
+            modified_contents = fixer.run(result.findings, original_contents)
+        else:
+            # Auto-fix mode
+            modified_contents, _ = apply_fixes_auto(
+                result.findings, original_contents, console=console
+            )
+
+        # Write modified files back to disk
+        files_written = write_fixed_files(modified_contents, original_contents)
+        if files_written > 0:
+            console.print(f"[green]Modified {files_written} file(s)[/green]")
 
     # Exit code based on findings
     if result.findings_at_or_above(fail_severity):

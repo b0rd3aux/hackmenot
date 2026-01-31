@@ -1,0 +1,33 @@
+id: CRYPTO005
+name: small-rsa-key-size
+severity: medium
+category: cryptography
+languages: [python]
+description: "RSA key size of 1024 bits or smaller"
+ai_context: "AI may suggest smaller key sizes from older examples, but 1024-bit RSA is now considered weak"
+
+pattern:
+  type: fstring
+  contains: ["key_size=512", "key_size=1024", "key_size=768", "bits=512", "bits=1024", "bits=768"]
+
+message: "RSA key size should be at least 2048 bits. Keys of 1024 bits or smaller are considered weak"
+
+fix:
+  template: |
+    # Use at least 2048-bit keys for RSA:
+    # from cryptography.hazmat.primitives.asymmetric import rsa
+    # private_key = rsa.generate_private_key(
+    #     public_exponent=65537,
+    #     key_size=2048,  # or 4096 for higher security
+    # )
+
+education: |
+  RSA keys of 1024 bits or smaller can be factored with sufficient computational resources
+  and are no longer considered secure. NIST recommends a minimum of 2048 bits for RSA keys
+  until 2030, and 3072 bits or more for use beyond 2030.
+  AI often suggests 1024-bit keys because older tutorials and examples use this size.
+  Always use at least 2048-bit keys for RSA.
+
+references:
+  - https://www.keylength.com/
+  - https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-57pt1r5.pdf

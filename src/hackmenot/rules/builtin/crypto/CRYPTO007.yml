@@ -1,0 +1,36 @@
+id: CRYPTO007
+name: unsalted-password-hash
+severity: high
+category: cryptography
+languages: [python]
+description: "Password hashing without salt"
+ai_context: "AI often suggests simple hashlib hashing for passwords without proper salting or key derivation"
+
+pattern:
+  type: fstring
+  contains: ["hashlib.sha256(password", "hashlib.sha512(password", "sha256(password", "sha512(password", "hashlib.pbkdf2_hmac"]
+
+message: "Use a proper password hashing function with salt like bcrypt, argon2, or scrypt"
+
+fix:
+  template: |
+    # Use bcrypt for password hashing:
+    # import bcrypt
+    # hashed = bcrypt.hashpw(password.encode(), bcrypt.gensalt())
+    #
+    # Or use argon2 (recommended):
+    # from argon2 import PasswordHasher
+    # ph = PasswordHasher()
+    # hash = ph.hash(password)
+
+education: |
+  Simple hash functions like SHA-256 are too fast for password hashing and vulnerable
+  to rainbow table and brute force attacks. Even with a salt, SHA-256 is not suitable
+  for passwords. AI frequently suggests hashlib.sha256(password.encode()).hexdigest()
+  because this pattern is common in training data, but it's insecure for passwords.
+  Use purpose-built password hashing functions like bcrypt, argon2, or scrypt that
+  include salt, are intentionally slow, and are resistant to GPU/ASIC attacks.
+
+references:
+  - https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html
+  - https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/04-Authentication_Testing/02-Testing_for_Default_Credentials

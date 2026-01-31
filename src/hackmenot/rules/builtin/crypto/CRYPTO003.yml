@@ -1,0 +1,32 @@
+id: CRYPTO003
+name: weak-random-for-security
+severity: high
+category: cryptography
+languages: [python]
+description: "Use of random module for security-sensitive operations"
+ai_context: "AI often suggests the random module for generating tokens or secrets, but it is not cryptographically secure"
+
+pattern:
+  type: fstring
+  contains: ["random.randint", "random.choice", "random.random", "random.randrange"]
+
+message: "The random module is not cryptographically secure. Do not use it for tokens, passwords, or secrets"
+
+fix:
+  template: |
+    # Use secrets module for security-sensitive random values:
+    # import secrets
+    # token = secrets.token_hex(32)
+    # secret = secrets.token_urlsafe(32)
+    # choice = secrets.choice(items)
+
+education: |
+  The random module uses a Mersenne Twister PRNG which is predictable and not suitable
+  for security purposes. An attacker who observes enough outputs can predict future values.
+  AI frequently suggests random.choice() or random.randint() for generating tokens because
+  these patterns appear often in non-security code in training data.
+  Use the secrets module for cryptographically secure random values.
+
+references:
+  - https://docs.python.org/3/library/secrets.html
+  - https://owasp.org/www-community/vulnerabilities/Insecure_Randomness

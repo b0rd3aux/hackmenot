@@ -1,0 +1,30 @@
+id: EXP003
+name: logging-secrets
+severity: high
+category: exposure
+languages: [python]
+description: "Sensitive data logged via logging functions"
+ai_context: "AI often logs variables for debugging without checking if they contain secrets"
+
+pattern:
+  type: call
+  contains: ["logger.info", "logger.debug", "logger.warning", "logger.error", "logging.info", "logging.debug", "logging.warning", "logging.error"]
+  args_contain: ["password", "secret", "key", "token", "api_key", "apikey", "auth"]
+
+message: "Sensitive data may be logged - avoid logging passwords, secrets, keys, or tokens"
+
+fix:
+  template: |
+    # Never log sensitive data. Mask or redact secrets:
+    # logger.info("User authenticated: %s", user_id)  # Log user ID, not credentials
+    # logger.debug("API call made")  # Don't log API keys
+
+education: |
+  AI-generated code often includes logging statements for debugging that inadvertently
+  log sensitive data like passwords, API keys, or tokens. Logs are frequently stored
+  in plaintext and may be accessible to many people or systems. Always sanitize
+  logged data and never include credentials or secrets.
+
+references:
+  - https://owasp.org/www-community/vulnerabilities/Logging_of_Sensitive_Data
+  - https://cwe.mitre.org/data/definitions/532.html

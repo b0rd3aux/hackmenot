@@ -1,0 +1,32 @@
+id: EXP006
+name: sensitive-data-in-url
+severity: high
+category: exposure
+languages: [python]
+description: "Sensitive data included in URL query parameters"
+ai_context: "AI constructs URLs with credentials in query strings for simplicity"
+
+pattern:
+  type: fstring
+  contains: ["?password=", "?api_key=", "?apikey=", "?secret=", "?token=", "?auth=", "&password=", "&api_key=", "&apikey=", "&secret=", "&token=", "&auth="]
+
+message: "Sensitive data in URL - credentials in URLs are logged and cached, use headers instead"
+
+fix:
+  template: |
+    # Pass sensitive data in headers, not URL parameters:
+    # headers = {"Authorization": f"Bearer {token}"}
+    # response = requests.get(url, headers=headers)
+    #
+    # Or use request body for POST:
+    # response = requests.post(url, json={"api_key": api_key})
+
+education: |
+  AI-generated code often builds URLs with credentials as query parameters for simplicity.
+  URLs are logged in server access logs, browser history, and proxy logs. They may also
+  be cached or shared inadvertently. Always pass sensitive data via HTTP headers
+  (like Authorization) or in the request body for POST requests.
+
+references:
+  - https://owasp.org/www-community/vulnerabilities/Information_exposure_through_query_strings_in_url
+  - https://cwe.mitre.org/data/definitions/598.html
