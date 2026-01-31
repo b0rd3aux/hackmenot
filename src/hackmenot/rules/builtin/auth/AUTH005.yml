@@ -1,0 +1,28 @@
+id: AUTH005
+name: missing-csrf-protection
+severity: high
+category: authentication
+languages: [python]
+description: "CSRF protection explicitly disabled"
+ai_context: "AI often disables CSRF protection to simplify API examples, leaving web forms vulnerable"
+
+pattern:
+  type: assignment
+  contains: ["WTF_CSRF_ENABLED = False", "CSRF_ENABLED = False", "csrf_protect = False"]
+
+message: "CSRF protection is disabled"
+
+fix:
+  template: |
+    # Enable CSRF protection:
+    WTF_CSRF_ENABLED = True
+    # For APIs, use token-based auth or CORS instead of disabling CSRF
+
+education: |
+  AI assistants frequently disable CSRF protection in Flask-WTF or similar
+  frameworks to make examples "simpler". This leaves applications vulnerable
+  to cross-site request forgery attacks. Always keep CSRF enabled for
+  browser-based sessions. For API endpoints, use proper token authentication.
+
+references:
+  - https://owasp.org/www-community/attacks/csrf
