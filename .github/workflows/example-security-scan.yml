@@ -1,0 +1,40 @@
+# Example workflow showing how to use the hackmenot GitHub Action
+# Copy this file to your repository's .github/workflows/ directory
+
+name: Security Scan
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+# Permissions required for SARIF upload to GitHub Security tab
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  security-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Required for --changed-only to work
+
+      # Basic usage - scans everything, fails on high+ severity
+      - name: Run HackMeNot Security Scan
+        uses: ./  # In your repo, use: your-org/hackmenot@v1
+        with:
+          path: '.'
+          severity: 'low'
+          fail-on: 'high'
+
+      # Advanced: SARIF upload to GitHub Security tab
+      # Uncomment to enable:
+      # - name: Run HackMeNot with SARIF
+      #   uses: ./
+      #   with:
+      #     sarif-upload: 'true'
+      #     changed-only: 'true'  # Only scan changed files in PRs

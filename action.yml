@@ -1,28 +1,47 @@
-name: 'hackmenot Security Scan'
-description: 'Scan code for AI-generated security vulnerabilities'
-author: 'hackmenot'
+name: 'HackMeNot Security Scanner'
+description: 'AI-Era Code Security Scanner - find hardcoded secrets, vulnerabilities, and security issues'
+author: 'HackMeNot'
 branding:
   icon: 'shield'
-  color: 'purple'
+  color: 'red'
 
 inputs:
   path:
-    description: 'Path to scan'
+    description: 'Path to scan (file or directory)'
     required: false
     default: '.'
+  severity:
+    description: 'Minimum severity to report (critical, high, medium, low)'
+    required: false
+    default: 'low'
   fail-on:
-    description: 'Minimum severity to fail on (critical, high, medium, low)'
+    description: 'Minimum severity to fail the build (critical, high, medium, low)'
     required: false
     default: 'high'
-  sarif:
-    description: 'Upload SARIF results to GitHub Code Scanning'
+  format:
+    description: 'Output format (terminal, json, sarif)'
     required: false
-    default: 'true'
+    default: 'terminal'
+  sarif-upload:
+    description: 'Upload SARIF to GitHub Security tab'
+    required: false
+    default: 'false'
+  changed-only:
+    description: 'Only scan files changed in PR (uses --changed-since)'
+    required: false
+    default: 'false'
+  python-version:
+    description: 'Python version to use'
+    required: false
+    default: '3.11'
 
 outputs:
-  findings:
-    description: 'Number of findings'
-    value: ${{ steps.scan.outputs.findings }}
+  findings-count:
+    description: 'Number of findings detected'
+    value: ${{ steps.scan.outputs.findings-count }}
+  sarif-file:
+    description: 'Path to SARIF file (if format=sarif)'
+    value: ${{ steps.scan.outputs.sarif-file }}
 
 runs:
   using: 'composite'
@@ -30,23 +49,70 @@ runs:
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
-        python-version: '3.11'
+        python-version: ${{ inputs.python-version }}
 
     - name: Install hackmenot
       shell: bash
       run: pip install hackmenot
 
-    - name: Run scan
+    - name: Determine base ref for changed-only
+      id: base-ref
+      if: inputs.changed-only == 'true'
+      shell: bash
+      run: |
+        BASE_SHA="${{ github.event.pull_request.base.sha }}"
+        if [ -n "$BASE_SHA" ]; then
+          echo "ref=$BASE_SHA" >> $GITHUB_OUTPUT
+        else
+          echo "ref=HEAD~1" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Run security scan
       id: scan
       shell: bash
       run: |
-        hackmenot scan ${{ inputs.path }} --ci --fail-on ${{ inputs.fail-on }} --format sarif > hackmenot-results.sarif || exit_code=$?
-        findings=$(grep -o '"ruleId"' hackmenot-results.sarif 2>/dev/null | wc -l || echo "0")
-        echo "findings=$findings" >> $GITHUB_OUTPUT
-        exit ${exit_code:-0}
+        ARGS="\"${{ inputs.path }}\" --severity \"${{ inputs.severity }}\" --fail-on \"${{ inputs.fail-on }}\" --ci"
 
-    - name: Upload SARIF
-      if: inputs.sarif == 'true' && always()
+        # Add format
+        if [ "${{ inputs.format }}" == "sarif" ] || [ "${{ inputs.sarif-upload }}" == "true" ]; then
+          ARGS="$ARGS --format sarif"
+          SARIF_FILE="${{ runner.temp }}/hackmenot-results.sarif"
+
+          # Add changed-only if enabled (for SARIF format)
+          if [ "${{ inputs.changed-only }}" == "true" ]; then
+            ARGS="$ARGS --changed-since \"${{ steps.base-ref.outputs.ref }}\""
+          fi
+
+          # Capture exit code to respect fail-on setting
+          set +e
+          hackmenot scan $ARGS > "$SARIF_FILE" 2>/dev/null
+          SCAN_EXIT_CODE=$?
+          set -e
+
+          echo "sarif-file=$SARIF_FILE" >> $GITHUB_OUTPUT
+
+          # Count findings from SARIF
+          FINDINGS=$(cat "$SARIF_FILE" | python -c "import json,sys; d=json.load(sys.stdin); print(sum(len(r.get('results',[])) for r in d.get('runs',[])))" 2>/dev/null || echo "0")
+          echo "findings-count=$FINDINGS" >> $GITHUB_OUTPUT
+
+          # Show results in log
+          cat "$SARIF_FILE"
+
+          # Exit with captured code to respect fail-on setting
+          exit $SCAN_EXIT_CODE
+        else
+          ARGS="$ARGS --format \"${{ inputs.format }}\""
+
+          # Add changed-only if enabled
+          if [ "${{ inputs.changed-only }}" == "true" ]; then
+            ARGS="$ARGS --changed-since \"${{ steps.base-ref.outputs.ref }}\""
+          fi
+
+          hackmenot scan $ARGS
+        fi
+
+    - name: Upload SARIF to GitHub Security
+      if: inputs.sarif-upload == 'true' && steps.scan.outputs.sarif-file != ''
       uses: github/codeql-action/upload-sarif@v3
       with:
-        sarif_file: hackmenot-results.sarif
+        sarif_file: ${{ steps.scan.outputs.sarif-file }}

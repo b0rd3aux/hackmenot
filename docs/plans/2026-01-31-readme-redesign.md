@@ -1,3 +1,63 @@
+# README Redesign for v1.0 Release
+
+## Design Goals
+
+- **Style**: Badge-heavy professional with screenshots/GIFs showing the tool in action
+- **Visual approach**: ASCII art logo, 4 key visuals throughout
+- **Tone**: Light storytelling (the AI security problem) with professional credibility
+
+## Visual Assets Required
+
+1. **`assets/hero-scan.gif`** - Basic scan finding vulnerabilities (hero visual)
+2. **`assets/fix-interactive.gif`** - `--fix-interactive` showing the fix flow
+3. **`assets/deps-scan.gif`** - `hackmenot deps` catching a hallucinated package
+4. **`assets/github-security.png`** - SARIF results in GitHub Security tab
+
+## README Structure
+
+### 1. Hero Section
+- Block-style ASCII art logo (Unicode box-drawing characters)
+- Tagline: "AI-Era Code Security Scanner"
+- Subtitle: "Catches the vulnerabilities AI coding assistants introduce—and fixes them."
+- Badge row 1: PyPI version, Tests, License, Python versions
+- Badge row 2: 100+ Rules, 4 Languages, Sub-second scans
+- Hero GIF (700px width)
+
+### 2. The Problem
+- "Over 50% of AI-generated code contains security vulnerabilities."
+- Purpose-built for AI era: detects, auto-fixes, educates
+
+### 3. Quick Start
+- 4 commands: install, scan, fix, deps
+- "No config files, no setup, no API keys"
+
+### 4. Features Showcase
+- **Scan & Detect** - 100+ rules, 4 languages + GIF
+- **Auto-Fix** - `--fix-interactive` + GIF
+- **Dependency Scanning** - hallucinated packages, typosquats, CVEs + GIF
+- **CI/CD & GitHub Security** - SARIF support + screenshot
+
+### 5. What It Catches
+- Table with Category, Examples, Languages columns
+- Injection, Authentication, Cryptography, Data Exposure, Infrastructure, Dependencies
+
+### 6. Installation & Usage
+- Installation: `pip install hackmenot`
+- Comprehensive usage examples (scan, severity, fail-on, formats, fix modes, changed-since, deps)
+
+### 7. Documentation
+- Table linking to all docs
+- Sponsor section with Patreon badge (patreon.com/b0rd3aux)
+
+### 8. Contributing & License
+- Link to contributing guide
+- Apache 2.0
+
+---
+
+## Full README Content
+
+```markdown
 <div align="center">
 
 ```
@@ -96,6 +156,8 @@ Native GitHub Action with SARIF support. Findings appear directly in GitHub's Se
     sarif-upload: 'true'
 ```
 
+<img src="assets/github-security.png" alt="GitHub Security integration" width="700">
+
 ---
 
 ## What It Catches
@@ -184,3 +246,4 @@ Contributions are welcome! See [Contributing Guide](docs/contributing.md) for de
 ## License
 
 Apache 2.0 - see [LICENSE](LICENSE) for details.
+```

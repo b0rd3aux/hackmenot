@@ -57,9 +57,14 @@ class FileCache:
     Thread-safe: uses a lock to protect concurrent access.
     """
 
-    def __init__(self, cache_dir: Path | None = None) -> None:
+    CACHE_VERSION = "v1.0.0"
+
+    def __init__(
+        self, cache_dir: Path | None = None, rules_hash: str | None = None
+    ) -> None:
         self.cache_dir = cache_dir or self._default_cache_dir()
         self.cache_dir.mkdir(parents=True, exist_ok=True)
+        self.rules_hash = rules_hash or ""
         self._cache: dict[str, tuple[str, list[dict[str, Any]]]] = {}
         self._lock = threading.Lock()
         self._load_cache()
@@ -69,22 +74,47 @@ class FileCache:
         return Path.home() / ".hackmenot" / "cache"
 
     def _load_cache(self) -> None:
-        """Load cache from disk."""
+        """Load cache from disk, validating version and rules hash."""
         cache_file = self.cache_dir / "scan_cache.json"
         if cache_file.exists():
             try:
                 with open(cache_file) as f:
                     data = json.load(f)
-                    self._cache = {k: (v[0], v[1]) for k, v in data.items()}
+
+                # Check metadata for version and rules compatibility
+                metadata = data.get("metadata", {})
+                stored_version = metadata.get("version", "")
+                stored_rules_hash = metadata.get("rules_hash", "")
+
+                if stored_version != self.CACHE_VERSION:
+                    # Version mismatch - invalidate entire cache
+                    self._cache = {}
+                    return
+
+                if stored_rules_hash != self.rules_hash:
+                    # Rules changed - invalidate entire cache
+                    self._cache = {}
+                    return
+
+                # Load the entries
+                entries = data.get("entries", {})
+                self._cache = {k: (v[0], v[1]) for k, v in entries.items()}
             except (json.JSONDecodeError, OSError, KeyError, IndexError):
                 self._cache = {}
 
     def _save_cache(self) -> None:
-        """Save cache to disk."""
+        """Save cache to disk with version metadata."""
         cache_file = self.cache_dir / "scan_cache.json"
         try:
+            data = {
+                "metadata": {
+                    "version": self.CACHE_VERSION,
+                    "rules_hash": self.rules_hash,
+                },
+                "entries": {k: list(v) for k, v in self._cache.items()},
+            }
             with open(cache_file, "w") as f:
-                json.dump({k: list(v) for k, v in self._cache.items()}, f)
+                json.dump(data, f)
         except OSError:
             pass  # Fail silently for cache writes
 
