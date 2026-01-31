@@ -310,3 +310,54 @@ def rules(
                 f"  [{sev_color}]{rule.severity.name:8}[/{sev_color}] "
                 f"[cyan]{rule.id}[/cyan] - {rule.name}"
             )
+
+
+@app.command()
+def deps(
+    path: Path = typer.Argument(..., help="Directory to scan for dependency files"),
+    check_vulns: bool = typer.Option(False, "--check-vulns", help="Check for CVEs via OSV API"),
+    format: OutputFormat = typer.Option(OutputFormat.terminal, "--format", "-f", help="Output format"),
+    fail_on: str = typer.Option("high", "--fail-on", help="Minimum severity for non-zero exit"),
+    ci: bool = typer.Option(False, "--ci", help="CI-friendly output"),
+) -> None:
+    """Scan dependencies for security issues."""
+    from hackmenot.deps.scanner import DependencyScanner
+
+    scan_console = Console(force_terminal=False, no_color=True) if ci else console
+
+    if not path.exists():
+        scan_console.print(f"Error: Path does not exist: {path}")
+        raise typer.Exit(1)
+    if not path.is_dir():
+        scan_console.print(f"Error: Path must be a directory: {path}")
+        raise typer.Exit(1)
+
+    try:
+        scanner = DependencyScanner()
+        result = scanner.scan(path, check_vulns=check_vulns)
+
+        if format == OutputFormat.terminal:
+            reporter = TerminalReporter(console=scan_console)
+            reporter.render(result)
+        elif format == OutputFormat.json:
+            _output_json(result)
+        elif format == OutputFormat.sarif:
+            from hackmenot.reporters.sarif import SARIFReporter
+            reporter = SARIFReporter()
+            print(reporter.render(result))
+    except typer.Exit:
+        raise
+    except Exception as e:
+        if ci:
+            scan_console.print(f"Error: {e}")
+            raise typer.Exit(2)
+        raise
+
+    try:
+        fail_severity = Severity.from_string(fail_on)
+    except KeyError:
+        scan_console.print(f"Error: Invalid severity: {fail_on}")
+        raise typer.Exit(1)
+
+    if result.findings_at_or_above(fail_severity):
+        raise typer.Exit(1)
