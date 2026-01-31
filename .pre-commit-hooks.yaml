@@ -1,0 +1,17 @@
+- id: hackmenot
+  name: hackmenot security scan
+  description: Scan staged files for security vulnerabilities
+  entry: hackmenot scan --staged --ci
+  language: python
+  types_or: [python, javascript, ts, tsx, jsx]
+  pass_filenames: false
+  stages: [pre-commit]
+
+- id: hackmenot-all
+  name: hackmenot full scan
+  description: Scan all files for security vulnerabilities
+  entry: hackmenot scan . --ci
+  language: python
+  types_or: [python, javascript, ts, tsx, jsx]
+  pass_filenames: false
+  stages: [pre-push]
