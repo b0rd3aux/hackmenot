@@ -1,0 +1,30 @@
+id: INJ005
+name: xss-template-unsafe
+severity: high
+category: injection
+languages: [python]
+description: "Cross-Site Scripting via unsafe template rendering"
+ai_context: "AI assistants may use the | safe filter or Markup() to avoid escaping, creating XSS vulnerabilities"
+
+pattern:
+  type: string
+  contains: ["| safe", "|safe", "Markup(", "mark_safe(", "autoescape false", "autoescape=False"]
+
+message: "Possible XSS: template content marked as safe without proper sanitization"
+
+fix:
+  template: |
+    # Avoid using | safe or Markup() with user input.
+    # If HTML is required, sanitize first:
+    # import bleach
+    # safe_html = bleach.clean(user_input, tags=['b', 'i', 'u', 'a'], attributes={'a': ['href']})
+    # Or use proper output encoding in templates
+
+education: |
+  The | safe filter in Jinja2 and Markup() in Flask disable HTML escaping,
+  which can lead to Cross-Site Scripting (XSS) if used with user-controlled content.
+  Always sanitize HTML content using a library like bleach before marking it as safe,
+  or avoid marking user input as safe entirely.
+
+references:
+  - https://owasp.org/www-community/attacks/xss/
