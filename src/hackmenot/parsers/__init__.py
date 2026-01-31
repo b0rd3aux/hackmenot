@@ -9,6 +9,13 @@ from hackmenot.parsers.javascript import (
     TemplateLiteralInfo,
 )
 from hackmenot.parsers.python import PythonParser
+from hackmenot.parsers.terraform import (
+    TerraformLocalInfo,
+    TerraformParser,
+    TerraformParseResult,
+    TerraformResourceInfo,
+    TerraformVariableInfo,
+)
 
 __all__ = [
     "AssignmentInfo",
@@ -18,4 +25,9 @@ __all__ = [
     "JSXElementInfo",
     "PythonParser",
     "TemplateLiteralInfo",
+    "TerraformLocalInfo",
+    "TerraformParser",
+    "TerraformParseResult",
+    "TerraformResourceInfo",
+    "TerraformVariableInfo",
 ]
