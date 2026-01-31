@@ -2,6 +2,7 @@
 
 import hashlib
 import json
+import threading
 from pathlib import Path
 from typing import Any
 
@@ -51,12 +52,16 @@ def _deserialize_findings(data: list[dict[str, Any]]) -> list[Finding]:
 
 
 class FileCache:
-    """Cache for storing scan results by file hash."""
+    """Cache for storing scan results by file hash.
+
+    Thread-safe: uses a lock to protect concurrent access.
+    """
 
     def __init__(self, cache_dir: Path | None = None) -> None:
         self.cache_dir = cache_dir or self._default_cache_dir()
         self.cache_dir.mkdir(parents=True, exist_ok=True)
         self._cache: dict[str, tuple[str, list[dict[str, Any]]]] = {}
+        self._lock = threading.Lock()
         self._load_cache()
 
     def _default_cache_dir(self) -> Path:
@@ -89,31 +94,40 @@ class FileCache:
         return hashlib.sha256(content).hexdigest()
 
     def get(self, file_path: Path) -> list[Finding] | None:
-        """Get cached results for a file, or None if not cached/stale."""
+        """Get cached results for a file, or None if not cached/stale.
+
+        Thread-safe: protected by lock.
+        """
         key = str(file_path.absolute())
-
-        if key not in self._cache:
-            return None
-
-        stored_hash, findings_data = self._cache[key]
         current_hash = self._file_hash(file_path)
 
-        if stored_hash != current_hash:
-            # File changed, invalidate cache
-            del self._cache[key]
-            return None
+        with self._lock:
+            if key not in self._cache:
+                return None
 
-        # Deserialize findings from dict format
-        return _deserialize_findings(findings_data)
+            stored_hash, findings_data = self._cache[key]
+
+            if stored_hash != current_hash:
+                # File changed, invalidate cache
+                del self._cache[key]
+                return None
+
+            # Deserialize findings from dict format
+            return _deserialize_findings(findings_data)
 
     def store(self, file_path: Path, findings: list[Finding]) -> None:
-        """Store results for a file."""
+        """Store results for a file.
+
+        Thread-safe: protected by lock.
+        """
         key = str(file_path.absolute())
         file_hash = self._file_hash(file_path)
         # Serialize findings to dict format for JSON storage
         serialized = _serialize_findings(findings) if findings else []
-        self._cache[key] = (file_hash, serialized)
-        self._save_cache()
+
+        with self._lock:
+            self._cache[key] = (file_hash, serialized)
+            self._save_cache()
 
     def clear(self) -> None:
         """Clear all cached results."""
