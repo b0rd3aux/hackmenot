@@ -1,0 +1,25 @@
+id: GO_NET003
+name: unvalidated-url
+severity: medium
+category: network
+languages: [go]
+description: Detects URL parsing without validation
+message: "Unvalidated URL: {code_snippet}"
+
+pattern:
+  type: call
+  names:
+    - url.Parse
+    - url.ParseRequestURI
+    - Parse
+    - ParseRequestURI
+
+fix:
+  template: "Validate parsed URLs against expected scheme, host, and path"
+
+education: |
+  Parsing URLs without validation can lead to security issues.
+  Always validate the scheme, host, and path after parsing.
+
+references:
+  - https://pkg.go.dev/net/url

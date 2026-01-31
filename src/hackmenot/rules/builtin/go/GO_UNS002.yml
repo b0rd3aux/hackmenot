@@ -1,0 +1,21 @@
+id: GO_UNS002
+name: cgo-usage
+severity: medium
+category: memory
+languages: [go]
+description: Detects CGO import which bypasses Go memory safety
+message: "CGO usage detected: {code_snippet}"
+
+pattern:
+  type: string
+  contains: ['import "C"', "import \"C\""]
+
+fix:
+  template: "Consider pure Go alternatives when possible"
+
+education: |
+  CGO allows calling C code but bypasses Go's memory safety.
+  Use pure Go implementations when available.
+
+references:
+  - https://go.dev/wiki/cgo

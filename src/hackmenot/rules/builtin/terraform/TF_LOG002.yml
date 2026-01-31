@@ -1,0 +1,17 @@
+id: TF_LOG002
+name: flow-logs-disabled
+severity: medium
+category: logging
+languages: [terraform]
+description: Detects VPCs that may be missing flow logs
+message: "VPC may be missing flow logs: {code_snippet}"
+pattern:
+  type: resource
+  resource_type: aws_vpc
+  missing_block: flow_logs
+fix_template: "Create an aws_flow_log resource for network visibility"
+education: |
+  VPC Flow Logs provide visibility into network traffic.
+  Enable flow logs to detect anomalies and aid incident response.
+references:
+  - https://docs.aws.amazon.com/vpc/latest/userguide/flow-logs.html

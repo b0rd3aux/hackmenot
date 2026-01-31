@@ -1,0 +1,28 @@
+id: GO_CRY004
+name: weak-random
+severity: medium
+category: cryptography
+languages: [go]
+description: "Detects use of math/rand for potentially security-sensitive operations"
+ai_context: "AI often uses math/rand for generating tokens or keys which is predictable"
+
+pattern:
+  type: import
+  names:
+    - math/rand
+
+message: "Weak random number generator: {code_snippet}"
+
+fix:
+  template: |
+    # Use crypto/rand for security-sensitive random numbers
+    # import "crypto/rand"
+    # bytes := make([]byte, 32)
+    # rand.Read(bytes)
+
+education: |
+  math/rand uses a predictable pseudo-random number generator.
+  Use crypto/rand for cryptographic purposes.
+
+references:
+  - https://pkg.go.dev/crypto/rand

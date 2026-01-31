@@ -1,0 +1,18 @@
+id: TF_LOG001
+name: cloudtrail-disabled
+severity: high
+category: logging
+languages: [terraform]
+description: Detects CloudTrail with logging disabled
+message: "CloudTrail logging may be disabled: {code_snippet}"
+pattern:
+  type: resource
+  resource_type: aws_cloudtrail
+  missing_field: enable_logging
+  expected_value: true
+fix_template: "Add enable_logging = true to CloudTrail resource"
+education: |
+  CloudTrail logging is essential for security auditing and compliance.
+  Ensure CloudTrail is enabled and logging to a secure S3 bucket.
+references:
+  - https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-user-guide.html

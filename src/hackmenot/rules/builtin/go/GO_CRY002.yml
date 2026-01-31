@@ -1,0 +1,28 @@
+id: GO_CRY002
+name: weak-hash-sha1
+severity: medium
+category: cryptography
+languages: [go]
+description: "Detects use of weak SHA1 hash algorithm"
+ai_context: "AI often suggests SHA1 for hashing which has known collision vulnerabilities"
+
+pattern:
+  type: import
+  names:
+    - crypto/sha1
+    - sha1
+
+message: "Weak hash algorithm SHA1: {code_snippet}"
+
+fix:
+  template: |
+    # Use SHA-256 or stronger: crypto/sha256
+    # import "crypto/sha256"
+    # hash := sha256.Sum256(data)
+
+education: |
+  SHA1 has known collision vulnerabilities and should not be used for security.
+  Use SHA-256 or SHA-3 for secure hashing.
+
+references:
+  - https://pkg.go.dev/crypto/sha256

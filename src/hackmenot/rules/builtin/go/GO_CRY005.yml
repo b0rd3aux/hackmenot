@@ -1,0 +1,30 @@
+id: GO_CRY005
+name: hardcoded-iv
+severity: high
+category: cryptography
+languages: [go]
+description: "Detects potential hardcoded initialization vectors"
+ai_context: "AI often generates code with hardcoded IVs or nonces which compromises encryption"
+
+pattern:
+  type: string
+  contains:
+    - iv
+    - IV
+    - nonce
+    - Nonce
+
+message: "Potential hardcoded IV: {code_snippet}"
+
+fix:
+  template: |
+    # Generate random IVs using crypto/rand for each encryption operation
+    # iv := make([]byte, aes.BlockSize)
+    # rand.Read(iv)
+
+education: |
+  Initialization vectors should be randomly generated for each encryption.
+  Hardcoded or reused IVs can compromise the security of encryption.
+
+references:
+  - https://pkg.go.dev/crypto/cipher

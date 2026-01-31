@@ -1,0 +1,16 @@
+id: TF_ENC004
+name: sqs-no-encryption
+severity: medium
+category: encryption
+languages: [terraform]
+description: Detects SQS queues without encryption
+message: "SQS queue without encryption: {code_snippet}"
+pattern:
+  type: resource
+  resource_type: aws_sqs_queue
+  missing_block: kms_master_key_id
+fix_template: "Add kms_master_key_id to enable server-side encryption"
+education: |
+  SQS queues should use server-side encryption to protect messages.
+references:
+  - https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-server-side-encryption.html

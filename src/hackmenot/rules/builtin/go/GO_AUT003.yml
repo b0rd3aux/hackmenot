@@ -1,0 +1,20 @@
+id: GO_AUT003
+name: hardcoded-token
+severity: high
+category: authentication
+languages: [go]
+description: Detects hardcoded tokens
+message: "Potential hardcoded token: {code_snippet}"
+
+pattern:
+  type: string
+  contains: [token, bearer, jwt, accesstoken, access_token, accessToken, authtoken, auth_token]
+
+fix_template: "Use environment variables or a secrets manager"
+
+education: |
+  Hardcoded tokens can be used to gain unauthorized access.
+  Store tokens securely and rotate them regularly.
+
+references:
+  - https://owasp.org/www-community/vulnerabilities/Use_of_hard-coded_credentials

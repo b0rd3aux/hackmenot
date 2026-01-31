@@ -1,0 +1,21 @@
+id: GO_UNS001
+name: unsafe-pointer
+severity: high
+category: memory
+languages: [go]
+description: Detects use of unsafe.Pointer
+message: "Use of unsafe.Pointer: {code_snippet}"
+
+pattern:
+  type: import
+  names: [unsafe]
+
+fix:
+  template: "Avoid unsafe package unless absolutely necessary and well-understood"
+
+education: |
+  The unsafe package bypasses Go's memory safety guarantees.
+  Only use it when absolutely necessary and with extreme care.
+
+references:
+  - https://pkg.go.dev/unsafe

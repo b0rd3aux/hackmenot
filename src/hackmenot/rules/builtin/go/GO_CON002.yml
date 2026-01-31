@@ -1,0 +1,23 @@
+id: GO_CON002
+name: goroutine-leak
+severity: medium
+category: concurrency
+languages: [go]
+description: Detects patterns that may cause goroutine leaks
+message: "Potential goroutine leak: {code_snippet}"
+
+pattern:
+  type: string
+  contains:
+    - make(chan
+    - for {
+    - select {
+
+fix_template: "Ensure goroutines can exit via context cancellation or channel close"
+
+education: |
+  Goroutine leaks occur when goroutines are started but never terminated.
+  Always provide a way to cancel or exit goroutines.
+
+references:
+  - https://go.dev/blog/pipelines

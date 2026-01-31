@@ -1,0 +1,17 @@
+id: TF_SEC004
+name: sensitive-not-set
+severity: medium
+category: secrets
+languages: [terraform]
+description: Detects sensitive variables without sensitive flag
+message: "Sensitive variable may be missing sensitive = true: {code_snippet}"
+pattern:
+  type: variable
+  name_contains: [password, secret, key, token, credential]
+  has_default: true
+fix_template: "Add sensitive = true to hide variable values in output"
+education: |
+  Variables containing sensitive data should have sensitive = true to prevent
+  values from appearing in logs and CLI output.
+references:
+  - https://developer.hashicorp.com/terraform/tutorials/configuration-language/sensitive-variables

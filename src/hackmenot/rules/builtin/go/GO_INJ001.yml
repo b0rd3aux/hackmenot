@@ -1,0 +1,34 @@
+id: GO_INJ001
+name: sql-injection
+severity: critical
+category: injection
+languages: [go]
+description: "Detects potential SQL injection vulnerabilities in Go code using database/sql"
+ai_context: "AI often generates SQL queries with string concatenation which creates SQL injection vulnerabilities"
+
+pattern:
+  type: call
+  names:
+    - db.Query
+    - db.QueryRow
+    - db.Exec
+    - Query
+    - QueryRow
+    - Exec
+    - QueryContext
+    - ExecContext
+
+message: "Potential SQL injection: {code_snippet}"
+
+fix:
+  template: |
+    # Use parameterized queries with placeholder arguments:
+    # db.Query("SELECT * FROM users WHERE id = ?", userId)
+
+education: |
+  SQL injection occurs when user input is directly concatenated into SQL queries.
+  In Go, use parameterized queries with ? placeholders:
+  db.Query("SELECT * FROM users WHERE id = ?", userId)
+
+references:
+  - https://go.dev/doc/database/sql-injection

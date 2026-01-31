@@ -1,0 +1,17 @@
+id: TF_SEC002
+name: hardcoded-password
+severity: critical
+category: secrets
+languages: [terraform]
+description: Detects hardcoded passwords in variable defaults
+message: "Potential hardcoded password: {code_snippet}"
+pattern:
+  type: variable
+  name_contains: [password, passwd, pwd]
+  has_default: true
+fix_template: "Remove default value and use environment variables or Terraform Vault provider"
+education: |
+  Hardcoded passwords can be exposed through state files or version control.
+  Use environment variables or a secrets manager.
+references:
+  - https://developer.hashicorp.com/terraform/tutorials/configuration-language/sensitive-variables

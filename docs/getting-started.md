@@ -2,6 +2,15 @@
 
 hackmenot is an AI-era code security scanner that catches vulnerabilities commonly introduced by AI coding assistants.
 
+## Supported Languages
+
+hackmenot supports the following languages and file types:
+
+- **Python** (.py)
+- **JavaScript/TypeScript** (.js, .ts, .jsx, .tsx)
+- **Go** (.go)
+- **Terraform** (.tf, .tfvars)
+
 ## Installation
 
 ```bash

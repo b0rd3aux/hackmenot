@@ -1,0 +1,20 @@
+id: GO_AUT004
+name: empty-password
+severity: critical
+category: authentication
+languages: [go]
+description: Detects empty password assignments
+message: "Empty password detected: {code_snippet}"
+
+pattern:
+  type: string
+  contains: ['password = ""', "password = ''", 'passwd = ""', "passwd = ''"]
+
+fix_template: "Require non-empty passwords"
+
+education: |
+  Empty passwords provide no security and can lead to unauthorized access.
+  Always require and validate passwords.
+
+references:
+  - https://cwe.mitre.org/data/definitions/258.html

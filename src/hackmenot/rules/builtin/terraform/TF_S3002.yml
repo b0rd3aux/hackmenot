@@ -1,0 +1,17 @@
+id: TF_S3002
+name: s3-no-encryption
+severity: high
+category: storage
+languages: [terraform]
+description: Detects S3 buckets without server-side encryption
+message: "S3 bucket missing encryption: {code_snippet}"
+pattern:
+  type: resource
+  resource_type: aws_s3_bucket
+  missing_block: server_side_encryption_configuration
+fix_template: "Add server_side_encryption_configuration with AES256 or aws:kms"
+education: |
+  S3 buckets should be encrypted at rest to protect sensitive data.
+  Use AES-256 or KMS encryption.
+references:
+  - https://docs.aws.amazon.com/AmazonS3/latest/userguide/bucket-encryption.html
