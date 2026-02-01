@@ -1,9 +1,0 @@
-# hackmenot configuration
-# https://github.com/b0rd3aux/hackmenot/blob/main/docs/configuration.md
-
-# Ignore false positives in our own codebase
-ignore:
-  # SARIF reporter constructs documentation URLs, not actual HTTP requests
-  - rule: INJ004
-    paths:
-      - src/hackmenot/reporters/sarif.py
