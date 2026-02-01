@@ -75,7 +75,7 @@ hackmenot scan . --fix-interactive
 
 ### Dependency Scanning
 
-Detect hallucinated packages (dependencies that don't exist), typosquats, and known CVEs.
+Detect hallucinated packages (dependencies that don't exist), typosquats, and known CVEs powered by [Google's OSV](https://osv.dev) database.
 
 ```bash
 hackmenot deps . --check-vulns
@@ -104,7 +104,7 @@ Native GitHub Action with SARIF support. Findings appear directly in GitHub's Se
 | **Cryptography** | Weak algorithms, hardcoded keys, insecure random | All |
 | **Data Exposure** | Logging secrets, verbose errors, debug mode in prod | All |
 | **Infrastructure** | Open security groups, missing encryption, public S3 buckets | Terraform |
-| **Dependencies** | Hallucinated packages, typosquats, known CVEs | Python, JS |
+| **Dependencies** | Hallucinated packages, typosquats, CVEs via [OSV](https://osv.dev) | Python, JS |
 
 ---
 
