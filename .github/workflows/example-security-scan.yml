@@ -23,11 +23,12 @@ jobs:
         with:
           fetch-depth: 0  # Required for --changed-only to work
 
-      # Basic usage - scans everything, fails on high+ severity
+      # Basic usage - scan source code, fails on high+ severity
+      # Note: We scan 'src/' to exclude test fixtures with intentional vulnerabilities
       - name: Run HackMeNot Security Scan
         uses: ./  # In your repo, use: your-org/hackmenot@v1
         with:
-          path: '.'
+          path: 'src/'
           severity: 'low'
           fail-on: 'high'
 
