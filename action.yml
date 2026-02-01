@@ -71,21 +71,29 @@ runs:
       id: scan
       shell: bash
       run: |
-        ARGS="\"${{ inputs.path }}\" --severity \"${{ inputs.severity }}\" --fail-on \"${{ inputs.fail-on }}\" --ci"
+        SCAN_PATH="${{ inputs.path }}"
+        SEVERITY="${{ inputs.severity }}"
+        FAIL_ON="${{ inputs.fail-on }}"
+        FORMAT="${{ inputs.format }}"
+        SARIF_UPLOAD="${{ inputs.sarif-upload }}"
+        CHANGED_ONLY="${{ inputs.changed-only }}"
+        BASE_REF="${{ steps.base-ref.outputs.ref }}"
 
-        # Add format
-        if [ "${{ inputs.format }}" == "sarif" ] || [ "${{ inputs.sarif-upload }}" == "true" ]; then
-          ARGS="$ARGS --format sarif"
+        # Build command
+        if [ "$FORMAT" == "sarif" ] || [ "$SARIF_UPLOAD" == "true" ]; then
           SARIF_FILE="${{ runner.temp }}/hackmenot-results.sarif"
 
-          # Add changed-only if enabled (for SARIF format)
-          if [ "${{ inputs.changed-only }}" == "true" ]; then
-            ARGS="$ARGS --changed-since \"${{ steps.base-ref.outputs.ref }}\""
+          # Build args array
+          SCAN_ARGS=("$SCAN_PATH" --severity "$SEVERITY" --fail-on "$FAIL_ON" --ci --format sarif)
+
+          # Add changed-only if enabled
+          if [ "$CHANGED_ONLY" == "true" ] && [ -n "$BASE_REF" ]; then
+            SCAN_ARGS+=(--changed-since "$BASE_REF")
           fi
 
           # Capture exit code to respect fail-on setting
           set +e
-          hackmenot scan $ARGS > "$SARIF_FILE" 2>/dev/null
+          hackmenot scan "${SCAN_ARGS[@]}" > "$SARIF_FILE" 2>/dev/null
           SCAN_EXIT_CODE=$?
           set -e
 
@@ -101,14 +109,15 @@ runs:
           # Exit with captured code to respect fail-on setting
           exit $SCAN_EXIT_CODE
         else
-          ARGS="$ARGS --format \"${{ inputs.format }}\""
+          # Build args array
+          SCAN_ARGS=("$SCAN_PATH" --severity "$SEVERITY" --fail-on "$FAIL_ON" --ci --format "$FORMAT")
 
           # Add changed-only if enabled
-          if [ "${{ inputs.changed-only }}" == "true" ]; then
-            ARGS="$ARGS --changed-since \"${{ steps.base-ref.outputs.ref }}\""
+          if [ "$CHANGED_ONLY" == "true" ] && [ -n "$BASE_REF" ]; then
+            SCAN_ARGS+=(--changed-since "$BASE_REF")
           fi
 
-          hackmenot scan $ARGS
+          hackmenot scan "${SCAN_ARGS[@]}"
         fi
 
     - name: Upload SARIF to GitHub Security
