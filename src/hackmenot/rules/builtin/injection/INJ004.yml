@@ -8,7 +8,8 @@ ai_context: "AI assistants often construct URLs using f-strings with user input,
 
 pattern:
   type: fstring
-  contains: ["requests.get", "requests.post", "requests.put", "requests.delete", "requests.patch", "urllib", "http://", "https://"]
+  # Only detect actual HTTP client calls, not just URL strings
+  contains: ["requests.get", "requests.post", "requests.put", "requests.delete", "requests.patch", "requests.request", "urllib.request", "httpx.get", "httpx.post", "aiohttp"]
 
 message: "Possible SSRF: HTTP request URL built with f-string interpolation"
 

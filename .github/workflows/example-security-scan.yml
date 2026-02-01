@@ -23,15 +23,14 @@ jobs:
         with:
           fetch-depth: 0  # Required for --changed-only to work
 
-      # Basic usage - scan source code, fails on critical severity
+      # Basic usage - scan source code, fails on high+ severity
       # Note: We scan 'src/' to exclude test fixtures with intentional vulnerabilities
-      # fail-on: critical allows high-severity findings to be reported without failing
       - name: Run HackMeNot Security Scan
         uses: ./  # In your repo, use: your-org/hackmenot@v1
         with:
           path: 'src/'
           severity: 'low'
-          fail-on: 'critical'
+          fail-on: 'high'
 
       # Advanced: SARIF upload to GitHub Security tab
       # Uncomment to enable:
