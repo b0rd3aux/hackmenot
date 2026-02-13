@@ -5,7 +5,7 @@ import queue
 from pathlib import Path
 from typing import Any
 
-from hackmenot.core.constants import DEFAULT_WORKERS
+from hackmenot.core.constants import DEFAULT_WORKERS, WORK_QUEUE_MAXSIZE
 from hackmenot.core.parallel_scanner import ParallelScanner, ScanWorker
 
 
@@ -29,12 +29,12 @@ class TestParallelScannerInit:
         assert scanner.num_workers == DEFAULT_WORKERS
 
     def test_initializes_work_queue_with_maxsize(self) -> None:
-        """Test that work_queue is initialized with maxsize=1000."""
+        """Test that work_queue is initialized with maxsize=WORK_QUEUE_MAXSIZE."""
         scanner = ParallelScanner()
         assert isinstance(scanner.work_queue, multiprocessing.queues.Queue)
         # Note: multiprocessing.Queue doesn't expose maxsize directly,
         # but we can verify it's bounded by trying to fill it
-        assert scanner.work_queue._maxsize == 1000
+        assert scanner.work_queue._maxsize == WORK_QUEUE_MAXSIZE
 
     def test_initializes_results_queue_unbounded(self) -> None:
         """Test that results_queue is initialized as unbounded."""

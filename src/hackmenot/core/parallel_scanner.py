@@ -12,6 +12,7 @@ from hackmenot.core.constants import (
     DEFAULT_WORKERS,
     SKIP_DIRS,
     SUPPORTED_EXTENSIONS,
+    WORK_QUEUE_MAXSIZE,
     WORKER_QUEUE_TIMEOUT,
 )
 
@@ -79,7 +80,9 @@ class ParallelScanner:
                         Defaults to DEFAULT_WORKERS if None.
         """
         self.num_workers = num_workers if num_workers is not None else DEFAULT_WORKERS
-        self.work_queue: multiprocessing.Queue[Path | None] = multiprocessing.Queue(maxsize=1000)
+        self.work_queue: multiprocessing.Queue[Path | None] = multiprocessing.Queue(
+            maxsize=WORK_QUEUE_MAXSIZE
+        )
         self.results_queue: multiprocessing.Queue[tuple[Path, list[Any]]] = multiprocessing.Queue()
 
     def _discover_files(self, paths: list[Path]) -> Iterator[Path]:
