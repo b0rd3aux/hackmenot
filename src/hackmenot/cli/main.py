@@ -17,6 +17,7 @@ from hackmenot.cli.interactive import (
 from hackmenot.core.config import ConfigLoader
 from hackmenot.core.constants import SUPPORTED_EXTENSIONS
 from hackmenot.core.models import ScanResult, Severity
+from hackmenot.core.parallel_scanner import ParallelScanner
 from hackmenot.core.scanner import Scanner
 from hackmenot.fixes.diff import DiffGenerator
 from hackmenot.reporters.terminal import TerminalReporter
@@ -138,6 +139,17 @@ def scan(
         "--include-deps",
         help="Also scan dependency files for security issues",
     ),
+    parallel: bool = typer.Option(
+        True,
+        "--parallel/--no-parallel",
+        help="Use parallel scanning (default: enabled in v2.0)",
+    ),
+    workers: int | None = typer.Option(
+        None,
+        "--workers",
+        "-w",
+        help="Number of worker processes for parallel scanning (default: CPU count)",
+    ),
 ) -> None:
     """Scan code for security vulnerabilities."""
     # Use CI-friendly console if --ci flag is set
@@ -235,9 +247,28 @@ def scan(
             scan_console.print(f"Error: Invalid severity level: {e}")
             raise typer.Exit(1)
 
-        # Run scan (bypass cache if --full is set)
-        scanner = Scanner(config=config)
-        result = scanner.scan(scan_paths, min_severity=min_severity, use_cache=not full)
+        # Run scan with parallel or sequential scanner
+        if parallel:
+            # Use parallel scanner (v2.0)
+            parallel_scanner = ParallelScanner(num_workers=workers)
+            parallel_results = parallel_scanner.scan(scan_paths)
+
+            # Convert ParallelScanner results to Scanner format
+            # ParallelScanner returns (file_path, findings) tuples
+            # Need to convert to Finding objects for compatibility
+            findings_list = []
+            for file_path, file_findings in parallel_results.findings:
+                findings_list.extend(file_findings)
+
+            result = ScanResult(
+                files_scanned=parallel_results.files_scanned,
+                findings=findings_list,
+                scan_time_ms=0,  # Parallel scanner doesn't track time yet
+            )
+        else:
+            # Use sequential scanner (v1.x, bypass cache if --full is set)
+            scanner = Scanner(config=config)
+            result = scanner.scan(scan_paths, min_severity=min_severity, use_cache=not full)
 
         # Include dependency scanning if requested
         if include_deps:
