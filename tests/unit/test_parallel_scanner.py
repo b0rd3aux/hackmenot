@@ -102,3 +102,153 @@ class TestScanWorker:
         # Should not raise exception, should exit cleanly
         worker.run()
         assert results_queue.empty()
+
+
+class TestFileDiscovery:
+    """Test file discovery functionality."""
+
+    def test_discovers_python_files_recursively(self, tmp_path: Path) -> None:
+        """Test that _discover_files finds .py files recursively."""
+        # Create test structure
+        (tmp_path / "test.py").touch()
+        (tmp_path / "subdir").mkdir()
+        (tmp_path / "subdir" / "nested.py").touch()
+
+        scanner = ParallelScanner()
+        files = list(scanner._discover_files([tmp_path]))
+
+        assert len(files) == 2
+        assert tmp_path / "test.py" in files
+        assert tmp_path / "subdir" / "nested.py" in files
+
+    def test_discovers_multiple_language_extensions(self, tmp_path: Path) -> None:
+        """Test that _discover_files finds files with different extensions."""
+        # Create files with different extensions
+        (tmp_path / "script.py").touch()
+        (tmp_path / "app.js").touch()
+        (tmp_path / "main.go").touch()
+        (tmp_path / "lib.rs").touch()
+        (tmp_path / "App.java").touch()
+        (tmp_path / "main.tf").touch()
+
+        scanner = ParallelScanner()
+        files = list(scanner._discover_files([tmp_path]))
+
+        assert len(files) == 6
+        assert tmp_path / "script.py" in files
+        assert tmp_path / "app.js" in files
+        assert tmp_path / "main.go" in files
+        assert tmp_path / "lib.rs" in files
+        assert tmp_path / "App.java" in files
+        assert tmp_path / "main.tf" in files
+
+    def test_yields_files_lazily(self, tmp_path: Path) -> None:
+        """Test that _discover_files returns a generator, not a list."""
+        (tmp_path / "test.py").touch()
+
+        scanner = ParallelScanner()
+        result = scanner._discover_files([tmp_path])
+
+        # Should be a generator/iterator, not a list
+        assert hasattr(result, "__iter__")
+        assert hasattr(result, "__next__")
+
+    def test_filters_out_unsupported_extensions(self, tmp_path: Path) -> None:
+        """Test that _discover_files ignores files with unsupported extensions."""
+        # Create supported and unsupported files
+        (tmp_path / "script.py").touch()
+        (tmp_path / "readme.md").touch()
+        (tmp_path / "data.json").touch()
+        (tmp_path / "config.yaml").touch()
+        (tmp_path / "binary.exe").touch()
+
+        scanner = ParallelScanner()
+        files = list(scanner._discover_files([tmp_path]))
+
+        # Should only find the .py file
+        assert len(files) == 1
+        assert tmp_path / "script.py" in files
+
+    def test_handles_multiple_input_paths(self, tmp_path: Path) -> None:
+        """Test that _discover_files handles multiple input directories."""
+        # Create two separate directories
+        dir1 = tmp_path / "dir1"
+        dir2 = tmp_path / "dir2"
+        dir1.mkdir()
+        dir2.mkdir()
+
+        (dir1 / "file1.py").touch()
+        (dir2 / "file2.py").touch()
+
+        scanner = ParallelScanner()
+        files = list(scanner._discover_files([dir1, dir2]))
+
+        assert len(files) == 2
+        assert dir1 / "file1.py" in files
+        assert dir2 / "file2.py" in files
+
+    def test_skips_symlinks_that_escape_base_path(self, tmp_path: Path) -> None:
+        """Test that _discover_files skips symlinks that point outside base path."""
+        # Create a directory structure
+        base_dir = tmp_path / "base"
+        base_dir.mkdir()
+        (base_dir / "safe.py").touch()
+
+        # Create a directory outside base
+        outside_dir = tmp_path / "outside"
+        outside_dir.mkdir()
+        (outside_dir / "escape.py").touch()
+
+        # Create a symlink that escapes base_dir
+        escape_link = base_dir / "escape_link"
+        escape_link.symlink_to(outside_dir / "escape.py")
+
+        scanner = ParallelScanner()
+        files = list(scanner._discover_files([base_dir]))
+
+        # Should only find safe.py, not the symlink target
+        assert len(files) == 1
+        assert base_dir / "safe.py" in files
+        assert escape_link not in files
+        assert outside_dir / "escape.py" not in files
+
+    def test_handles_empty_directory(self, tmp_path: Path) -> None:
+        """Test that _discover_files handles directories with no matching files."""
+        empty_dir = tmp_path / "empty"
+        empty_dir.mkdir()
+
+        scanner = ParallelScanner()
+        files = list(scanner._discover_files([empty_dir]))
+
+        assert len(files) == 0
+
+    def test_handles_single_file_path(self, tmp_path: Path) -> None:
+        """Test that _discover_files handles a single file path."""
+        test_file = tmp_path / "test.py"
+        test_file.touch()
+
+        scanner = ParallelScanner()
+        files = list(scanner._discover_files([test_file]))
+
+        assert len(files) == 1
+        assert test_file in files
+
+    def test_skips_common_directories(self, tmp_path: Path) -> None:
+        """Test that _discover_files skips common directories like node_modules."""
+        # Create files in directories that should be skipped
+        (tmp_path / "node_modules").mkdir()
+        (tmp_path / "node_modules" / "lib.js").touch()
+        (tmp_path / "__pycache__").mkdir()
+        (tmp_path / "__pycache__" / "cache.py").touch()
+        (tmp_path / ".git").mkdir()
+        (tmp_path / ".git" / "config").touch()
+
+        # Create a file that should be found
+        (tmp_path / "app.py").touch()
+
+        scanner = ParallelScanner()
+        files = list(scanner._discover_files([tmp_path]))
+
+        # Should only find app.py, not files in skipped directories
+        assert len(files) == 1
+        assert tmp_path / "app.py" in files
