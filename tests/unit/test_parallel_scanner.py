@@ -2,6 +2,7 @@
 
 import queue
 from pathlib import Path
+from typing import Any
 
 from hackmenot.core.constants import DEFAULT_WORKERS
 from hackmenot.core.parallel_scanner import ParallelScanner, ScanWorker
@@ -10,18 +11,18 @@ from hackmenot.core.parallel_scanner import ParallelScanner, ScanWorker
 class TestParallelScannerInit:
     """Test ParallelScanner initialization."""
 
-    def test_default_worker_count(self):
+    def test_default_worker_count(self) -> None:
         """Test that ParallelScanner defaults to DEFAULT_WORKERS."""
         scanner = ParallelScanner()
         assert scanner.num_workers == DEFAULT_WORKERS
 
-    def test_custom_worker_count(self):
+    def test_custom_worker_count(self) -> None:
         """Test that ParallelScanner accepts custom worker count."""
         custom_count = 4
         scanner = ParallelScanner(num_workers=custom_count)
         assert scanner.num_workers == custom_count
 
-    def test_explicit_none_uses_default(self):
+    def test_explicit_none_uses_default(self) -> None:
         """Test that explicitly passing None uses DEFAULT_WORKERS."""
         scanner = ParallelScanner(num_workers=None)
         assert scanner.num_workers == DEFAULT_WORKERS
@@ -30,10 +31,10 @@ class TestParallelScannerInit:
 class TestScanWorker:
     """Test ScanWorker class."""
 
-    def test_worker_pulls_from_work_queue(self):
+    def test_worker_pulls_from_work_queue(self) -> None:
         """Test that worker pulls file paths from work queue."""
         work_queue: queue.Queue[Path | None] = queue.Queue()
-        results_queue: queue.Queue[tuple[Path, list]] = queue.Queue()
+        results_queue: queue.Queue[tuple[Path, list[Any]]] = queue.Queue()
 
         # Add a file and poison pill
         test_file = Path("/fake/path/test.py")
@@ -49,10 +50,10 @@ class TestScanWorker:
         assert file_path == test_file
         assert isinstance(findings, list)
 
-    def test_worker_handles_poison_pill(self):
+    def test_worker_handles_poison_pill(self) -> None:
         """Test that worker exits when receiving None (poison pill)."""
         work_queue: queue.Queue[Path | None] = queue.Queue()
-        results_queue: queue.Queue[tuple[Path, list]] = queue.Queue()
+        results_queue: queue.Queue[tuple[Path, list[Any]]] = queue.Queue()
 
         # Add only poison pill
         work_queue.put(None)
@@ -63,10 +64,10 @@ class TestScanWorker:
         # Worker should exit cleanly without putting anything to results
         assert results_queue.empty()
 
-    def test_worker_processes_multiple_files(self):
+    def test_worker_processes_multiple_files(self) -> None:
         """Test that worker processes multiple files before poison pill."""
         work_queue: queue.Queue[Path | None] = queue.Queue()
-        results_queue: queue.Queue[tuple[Path, list]] = queue.Queue()
+        results_queue: queue.Queue[tuple[Path, list[Any]]] = queue.Queue()
 
         # Add multiple files and poison pill
         files = [Path("/fake/file1.py"), Path("/fake/file2.js"), Path("/fake/file3.go")]
@@ -87,10 +88,10 @@ class TestScanWorker:
         assert len(processed_files) == len(files)
         assert set(processed_files) == set(files)
 
-    def test_worker_handles_empty_queue_timeout(self):
+    def test_worker_handles_empty_queue_timeout(self) -> None:
         """Test that worker handles queue timeout gracefully."""
         work_queue: queue.Queue[Path | None] = queue.Queue()
-        results_queue: queue.Queue[tuple[Path, list]] = queue.Queue()
+        results_queue: queue.Queue[tuple[Path, list[Any]]] = queue.Queue()
 
         # Don't put anything in queue initially, then add poison pill after delay
         worker = ScanWorker(work_queue, results_queue)

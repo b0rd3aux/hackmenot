@@ -4,6 +4,7 @@ import os
 
 # Scanner constants
 DEFAULT_WORKERS = min(32, (os.cpu_count() or 1) + 4)
+WORKER_QUEUE_TIMEOUT = 1.0  # seconds, timeout for worker queue.get() calls
 
 # File extension sets by language
 PYTHON_EXTENSIONS = {".py"}

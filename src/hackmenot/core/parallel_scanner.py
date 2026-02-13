@@ -6,7 +6,7 @@ import queue
 from pathlib import Path
 from typing import Any
 
-from hackmenot.core.constants import DEFAULT_WORKERS
+from hackmenot.core.constants import DEFAULT_WORKERS, WORKER_QUEUE_TIMEOUT
 
 
 class ScanWorker:
@@ -35,7 +35,7 @@ class ScanWorker:
         """
         while True:
             try:
-                file_path = self.work_queue.get(timeout=1.0)
+                file_path = self.work_queue.get(timeout=WORKER_QUEUE_TIMEOUT)
             except queue.Empty:
                 # No work available, keep waiting
                 continue
