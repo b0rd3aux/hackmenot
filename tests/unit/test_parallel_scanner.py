@@ -1,5 +1,6 @@
 """Tests for ParallelScanner class."""
 
+import multiprocessing
 import queue
 from pathlib import Path
 from typing import Any
@@ -26,6 +27,22 @@ class TestParallelScannerInit:
         """Test that explicitly passing None uses DEFAULT_WORKERS."""
         scanner = ParallelScanner(num_workers=None)
         assert scanner.num_workers == DEFAULT_WORKERS
+
+    def test_initializes_work_queue_with_maxsize(self) -> None:
+        """Test that work_queue is initialized with maxsize=1000."""
+        scanner = ParallelScanner()
+        assert isinstance(scanner.work_queue, multiprocessing.queues.Queue)
+        # Note: multiprocessing.Queue doesn't expose maxsize directly,
+        # but we can verify it's bounded by trying to fill it
+        assert scanner.work_queue._maxsize == 1000
+
+    def test_initializes_results_queue_unbounded(self) -> None:
+        """Test that results_queue is initialized as unbounded."""
+        scanner = ParallelScanner()
+        assert isinstance(scanner.results_queue, multiprocessing.queues.Queue)
+        # multiprocessing.Queue() without maxsize arg defaults to a very large value (effectively unbounded)
+        # The exact value is platform-dependent, but should be much larger than work_queue
+        assert scanner.results_queue._maxsize > scanner.work_queue._maxsize
 
 
 class TestScanWorker:
@@ -252,3 +269,79 @@ class TestFileDiscovery:
         # Should only find app.py, not files in skipped directories
         assert len(files) == 1
         assert tmp_path / "app.py" in files
+
+
+class TestWorkDistribution:
+    """Test work distribution functionality."""
+
+    def test_distribute_work_enqueues_files(self, tmp_path: Path) -> None:
+        """Test that _distribute_work enqueues all discovered files."""
+        # Create test files
+        (tmp_path / "file1.py").touch()
+        (tmp_path / "file2.py").touch()
+        (tmp_path / "file3.py").touch()
+
+        scanner = ParallelScanner()
+        files = list(scanner._discover_files([tmp_path]))
+
+        # Distribute work
+        scanner._distribute_work(iter(files))
+
+        # Check that all files were enqueued - read exactly len(files) items
+        enqueued_files = []
+        for _ in range(len(files)):
+            try:
+                file = scanner.work_queue.get(timeout=1.0)
+                enqueued_files.append(file)
+            except queue.Empty:
+                break
+
+        assert len(enqueued_files) == 3
+        assert set(enqueued_files) == set(files)
+
+    def test_distribute_work_handles_empty_iterator(self) -> None:
+        """Test that _distribute_work handles empty file iterator."""
+        scanner = ParallelScanner()
+        empty_files = iter([])
+
+        # Should not raise exception
+        scanner._distribute_work(empty_files)
+
+        # Queue should be empty
+        assert scanner.work_queue.empty()
+
+    def test_send_poison_pills_sends_correct_count(self) -> None:
+        """Test that _send_poison_pills sends one None per worker."""
+        scanner = ParallelScanner(num_workers=4)
+
+        scanner._send_poison_pills()
+
+        # Count poison pills - read exactly num_workers items
+        poison_pills = []
+        for _ in range(scanner.num_workers):
+            try:
+                item = scanner.work_queue.get(timeout=1.0)
+                if item is None:
+                    poison_pills.append(item)
+            except queue.Empty:
+                break
+
+        assert len(poison_pills) == 4
+
+    def test_send_poison_pills_respects_worker_count(self) -> None:
+        """Test that poison pills match configured worker count."""
+        for worker_count in [1, 2, 4, 8]:
+            scanner = ParallelScanner(num_workers=worker_count)
+            scanner._send_poison_pills()
+
+            # Count poison pills - read exactly worker_count items
+            pills = 0
+            for _ in range(worker_count):
+                try:
+                    item = scanner.work_queue.get(timeout=1.0)
+                    if item is None:
+                        pills += 1
+                except queue.Empty:
+                    break
+
+            assert pills == worker_count

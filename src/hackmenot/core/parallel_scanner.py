@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import multiprocessing
 import queue
 from collections.abc import Iterator
 from pathlib import Path
@@ -78,6 +79,8 @@ class ParallelScanner:
                         Defaults to DEFAULT_WORKERS if None.
         """
         self.num_workers = num_workers if num_workers is not None else DEFAULT_WORKERS
+        self.work_queue: multiprocessing.Queue[Path | None] = multiprocessing.Queue(maxsize=1000)
+        self.results_queue: multiprocessing.Queue[tuple[Path, list[Any]]] = multiprocessing.Queue()
 
     def _discover_files(self, paths: list[Path]) -> Iterator[Path]:
         """Discover files to scan from input paths.
@@ -127,3 +130,24 @@ class ParallelScanner:
                         continue
 
                     yield file_path
+
+    def _distribute_work(self, files: Iterator[Path]) -> None:
+        """Distribute files to work queue for workers to process.
+
+        Enqueues file paths to the work queue. Blocks if queue is full
+        (provides backpressure to prevent unbounded memory growth).
+
+        Args:
+            files: Iterator of file paths to distribute.
+        """
+        for file_path in files:
+            self.work_queue.put(file_path)
+
+    def _send_poison_pills(self) -> None:
+        """Send poison pills to work queue to signal workers to exit.
+
+        Sends one None (poison pill) per worker to gracefully shutdown
+        all worker processes.
+        """
+        for _ in range(self.num_workers):
+            self.work_queue.put(None)
