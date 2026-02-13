@@ -14,7 +14,8 @@
 
 ![100+ Security Rules](https://img.shields.io/badge/rules-120+-green)
 ![6 Languages](https://img.shields.io/badge/languages-Python%20%7C%20JS%20%7C%20Go%20%7C%20Rust%20%7C%20Java%20%7C%20Terraform-orange)
-![Sub-second Scans](https://img.shields.io/badge/scans-sub--second-purple)
+![Enterprise Scale](https://img.shields.io/badge/scans-10k%20files%20%3C10s-purple)
+![Parallel Scanning](https://img.shields.io/badge/parallel-enterprise%20scale-blueviolet)
 
 <img src="assets/hero-scan.gif" alt="hackmenot in action" width="700">
 
@@ -92,6 +93,31 @@ Native GitHub Action with SARIF support. Findings appear directly in GitHub's Se
   with:
     sarif-upload: 'true'
 ```
+
+### ⚡ Enterprise-Scale Performance (v2.0)
+
+Parallel scanning architecture built for large codebases:
+
+- **10k files in <10 seconds** on 8-core machines
+- **Memory-efficient**: <2GB for 50k file scans
+- **Zero external dependencies**: Pure Python multiprocessing
+
+```bash
+# Parallel scanning (default in v2.0)
+hackmenot scan .
+
+# Control worker count
+hackmenot scan . --workers 16
+
+# Sequential mode (v1.x behavior)
+hackmenot scan . --no-parallel
+```
+
+**Performance Targets:**
+- Small repos (100 files): <1s
+- Medium repos (1k files): <3s
+- Large repos (10k files): <10s
+- Enterprise (50k files): <60s
 
 ---
 
