@@ -29,6 +29,8 @@ from hackmenot.parsers.javascript import JavaScriptParser
 from hackmenot.parsers.python import PythonParser
 from hackmenot.parsers.rust import RustParser
 from hackmenot.parsers.terraform import TerraformParser
+from hackmenot.rules.engine import RulesEngine
+from hackmenot.rules.registry import RuleRegistry
 
 
 @dataclass
@@ -51,15 +53,18 @@ class ScanWorker:
         self,
         work_queue: Any,  # queue.Queue or multiprocessing.Queue
         results_queue: Any,  # queue.Queue or multiprocessing.Queue
+        rules_engine: Any,  # RulesEngine instance
     ) -> None:
         """Initialize the ScanWorker.
 
         Args:
             work_queue: Queue to pull file paths from.
             results_queue: Queue to push scan results to.
+            rules_engine: RulesEngine instance with registered rules.
         """
         self.work_queue = work_queue
         self.results_queue = results_queue
+        self.rules_engine = rules_engine
         self._parsers: dict[str, Any] = {}
 
     def run(self) -> None:
@@ -134,27 +139,77 @@ class ScanWorker:
     def _scan_file(self, file_path: Path) -> list[Any]:
         """Scan a single file for security issues.
 
+        Parses the file using the appropriate parser and checks it against
+        all registered rules. Handles errors gracefully without crashing
+        the worker process.
+
         Args:
             file_path: Path to the file to scan.
 
         Returns:
-            List of findings (empty for now, actual scanning in Task 9).
+            List of findings from rule checks. Returns empty list if:
+            - File cannot be parsed (parse error)
+            - File is binary (UnicodeDecodeError)
+            - Parser not available for file type
+            - Rule checking fails
+            - No issues found
         """
-        # Placeholder: actual scanning logic will be implemented in Task 9
-        return []
+        try:
+            # Get parser for this file type
+            parser = self._get_parser(file_path)
+            if parser is None:
+                # No parser available for this file type
+                return []
+
+            # Parse the file
+            parse_result = parser.parse_file(file_path)
+
+            # Check if parse failed
+            if parse_result is None or parse_result.has_error:
+                # Parse error - skip this file
+                return []
+
+            # Check rules against parsed AST
+            findings: list[Any] = self.rules_engine.check(parse_result, file_path)
+            return findings
+
+        except UnicodeDecodeError:
+            # Binary file - skip
+            return []
+        except (OSError, ValueError, RuntimeError):
+            # OSError: file access issues
+            # ValueError: invalid parse result
+            # RuntimeError: rule check errors
+            # Don't crash the worker on individual file errors
+            return []
 
 
 class ParallelScanner:
     """Parallel scanner for processing files concurrently."""
 
-    def __init__(self, num_workers: int | None = None) -> None:
+    def __init__(
+        self, num_workers: int | None = None, rules_engine: RulesEngine | None = None
+    ) -> None:
         """Initialize the ParallelScanner.
 
         Args:
             num_workers: Number of worker processes to use.
                         Defaults to DEFAULT_WORKERS if None.
+            rules_engine: RulesEngine instance with registered rules.
+                         If None, automatically loads all rules from RuleRegistry.
         """
         self.num_workers = num_workers if num_workers is not None else DEFAULT_WORKERS
+
+        # Load rules if not provided
+        if rules_engine is None:
+            rule_registry = RuleRegistry()
+            rule_registry.load_all()
+            self.rules_engine = RulesEngine()
+            for rule in rule_registry.get_all_rules():
+                self.rules_engine.register_rule(rule)
+        else:
+            self.rules_engine = rules_engine
+
         self.work_queue: multiprocessing.Queue[Path | None] = multiprocessing.Queue(
             maxsize=WORK_QUEUE_MAXSIZE
         )
@@ -241,7 +296,7 @@ class ParallelScanner:
         for _ in range(self.num_workers):
             worker_process = multiprocessing.Process(
                 target=_worker_target,
-                args=(self.work_queue, self.results_queue),
+                args=(self.work_queue, self.results_queue, self.rules_engine),
             )
             worker_process.start()
             self._workers.append(worker_process)
@@ -331,6 +386,7 @@ class ParallelScanner:
 def _worker_target(
     work_queue: multiprocessing.Queue[Path | None],
     results_queue: multiprocessing.Queue[tuple[Path, list[Any]]],
+    rules_engine: RulesEngine,
 ) -> None:
     """Target function for worker processes.
 
@@ -339,6 +395,7 @@ def _worker_target(
     Args:
         work_queue: Queue to pull file paths from.
         results_queue: Queue to push scan results to.
+        rules_engine: RulesEngine instance with registered rules.
     """
-    worker = ScanWorker(work_queue, results_queue)
+    worker = ScanWorker(work_queue, results_queue, rules_engine)
     worker.run()

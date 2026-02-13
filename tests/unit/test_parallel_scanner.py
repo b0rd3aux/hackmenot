@@ -52,15 +52,18 @@ class TestScanWorker:
 
     def test_worker_pulls_from_work_queue(self) -> None:
         """Test that worker pulls file paths from work queue."""
+        from hackmenot.rules.engine import RulesEngine
+
         work_queue: queue.Queue[Path | None] = queue.Queue()
         results_queue: queue.Queue[tuple[Path, list[Any]]] = queue.Queue()
+        engine = RulesEngine()
 
         # Add a file and poison pill
         test_file = Path("/fake/path/test.py")
         work_queue.put(test_file)
         work_queue.put(None)  # Poison pill to stop worker
 
-        worker = ScanWorker(work_queue, results_queue)
+        worker = ScanWorker(work_queue, results_queue, engine)
         worker.run()
 
         # Worker should have processed the file and put result
@@ -77,7 +80,10 @@ class TestScanWorker:
         # Add only poison pill
         work_queue.put(None)
 
-        worker = ScanWorker(work_queue, results_queue)
+        from hackmenot.rules.engine import RulesEngine
+
+        engine = RulesEngine()
+        worker = ScanWorker(work_queue, results_queue, engine)
         worker.run()
 
         # Worker should exit cleanly without putting anything to results
@@ -94,7 +100,10 @@ class TestScanWorker:
             work_queue.put(file)
         work_queue.put(None)  # Poison pill
 
-        worker = ScanWorker(work_queue, results_queue)
+        from hackmenot.rules.engine import RulesEngine
+
+        engine = RulesEngine()
+        worker = ScanWorker(work_queue, results_queue, engine)
         worker.run()
 
         # Worker should have processed all files
@@ -113,7 +122,10 @@ class TestScanWorker:
         results_queue: queue.Queue[tuple[Path, list[Any]]] = queue.Queue()
 
         # Don't put anything in queue initially, then add poison pill after delay
-        worker = ScanWorker(work_queue, results_queue)
+        from hackmenot.rules.engine import RulesEngine
+
+        engine = RulesEngine()
+        worker = ScanWorker(work_queue, results_queue, engine)
 
         # Put poison pill immediately so worker exits quickly
         work_queue.put(None)
@@ -438,8 +450,8 @@ class TestWorkerLifecycle:
             kwargs = call[1]
             assert "target" in kwargs
             assert "args" in kwargs
-            # Args should be (work_queue, results_queue)
-            assert len(kwargs["args"]) == 2
+            # Args should be (work_queue, results_queue, rules_engine)
+            assert len(kwargs["args"]) == 3
 
         # Clean up (if workers were actually started)
         scanner._send_poison_pills()
@@ -816,7 +828,10 @@ class TestParserCaching:
 
         work_queue: queue.Queue[Path | None] = queue.Queue()
         results_queue: queue.Queue[tuple[Path, list[Any]]] = queue.Queue()
-        worker = ScanWorker(work_queue, results_queue)
+        from hackmenot.rules.engine import RulesEngine
+
+        engine = RulesEngine()
+        worker = ScanWorker(work_queue, results_queue, engine)
 
         parser = worker._get_parser(Path("/fake/test.py"))
 
@@ -829,7 +844,10 @@ class TestParserCaching:
 
         work_queue: queue.Queue[Path | None] = queue.Queue()
         results_queue: queue.Queue[tuple[Path, list[Any]]] = queue.Queue()
-        worker = ScanWorker(work_queue, results_queue)
+        from hackmenot.rules.engine import RulesEngine
+
+        engine = RulesEngine()
+        worker = ScanWorker(work_queue, results_queue, engine)
 
         parser = worker._get_parser(Path("/fake/app.js"))
 
@@ -842,7 +860,10 @@ class TestParserCaching:
 
         work_queue: queue.Queue[Path | None] = queue.Queue()
         results_queue: queue.Queue[tuple[Path, list[Any]]] = queue.Queue()
-        worker = ScanWorker(work_queue, results_queue)
+        from hackmenot.rules.engine import RulesEngine
+
+        engine = RulesEngine()
+        worker = ScanWorker(work_queue, results_queue, engine)
 
         parser = worker._get_parser(Path("/fake/main.go"))
 
@@ -855,7 +876,10 @@ class TestParserCaching:
 
         work_queue: queue.Queue[Path | None] = queue.Queue()
         results_queue: queue.Queue[tuple[Path, list[Any]]] = queue.Queue()
-        worker = ScanWorker(work_queue, results_queue)
+        from hackmenot.rules.engine import RulesEngine
+
+        engine = RulesEngine()
+        worker = ScanWorker(work_queue, results_queue, engine)
 
         parser = worker._get_parser(Path("/fake/lib.rs"))
 
@@ -868,7 +892,10 @@ class TestParserCaching:
 
         work_queue: queue.Queue[Path | None] = queue.Queue()
         results_queue: queue.Queue[tuple[Path, list[Any]]] = queue.Queue()
-        worker = ScanWorker(work_queue, results_queue)
+        from hackmenot.rules.engine import RulesEngine
+
+        engine = RulesEngine()
+        worker = ScanWorker(work_queue, results_queue, engine)
 
         parser = worker._get_parser(Path("/fake/App.java"))
 
@@ -881,7 +908,10 @@ class TestParserCaching:
 
         work_queue: queue.Queue[Path | None] = queue.Queue()
         results_queue: queue.Queue[tuple[Path, list[Any]]] = queue.Queue()
-        worker = ScanWorker(work_queue, results_queue)
+        from hackmenot.rules.engine import RulesEngine
+
+        engine = RulesEngine()
+        worker = ScanWorker(work_queue, results_queue, engine)
 
         parser = worker._get_parser(Path("/fake/main.tf"))
 
@@ -892,7 +922,10 @@ class TestParserCaching:
         """Test that _get_parser caches and reuses parser instances."""
         work_queue: queue.Queue[Path | None] = queue.Queue()
         results_queue: queue.Queue[tuple[Path, list[Any]]] = queue.Queue()
-        worker = ScanWorker(work_queue, results_queue)
+        from hackmenot.rules.engine import RulesEngine
+
+        engine = RulesEngine()
+        worker = ScanWorker(work_queue, results_queue, engine)
 
         # Get parser for first .py file
         parser1 = worker._get_parser(Path("/fake/test1.py"))
@@ -906,7 +939,10 @@ class TestParserCaching:
         """Test that different languages get different parser instances."""
         work_queue: queue.Queue[Path | None] = queue.Queue()
         results_queue: queue.Queue[tuple[Path, list[Any]]] = queue.Queue()
-        worker = ScanWorker(work_queue, results_queue)
+        from hackmenot.rules.engine import RulesEngine
+
+        engine = RulesEngine()
+        worker = ScanWorker(work_queue, results_queue, engine)
 
         # Get parsers for different languages
         py_parser = worker._get_parser(Path("/fake/test.py"))
@@ -927,7 +963,10 @@ class TestParserCaching:
 
         work_queue: queue.Queue[Path | None] = queue.Queue()
         results_queue: queue.Queue[tuple[Path, list[Any]]] = queue.Queue()
-        worker = ScanWorker(work_queue, results_queue)
+        from hackmenot.rules.engine import RulesEngine
+
+        engine = RulesEngine()
+        worker = ScanWorker(work_queue, results_queue, engine)
 
         extensions = [".js", ".ts", ".jsx", ".tsx", ".mjs", ".cjs"]
         for ext in extensions:
@@ -941,7 +980,10 @@ class TestParserCaching:
 
         work_queue: queue.Queue[Path | None] = queue.Queue()
         results_queue: queue.Queue[tuple[Path, list[Any]]] = queue.Queue()
-        worker = ScanWorker(work_queue, results_queue)
+        from hackmenot.rules.engine import RulesEngine
+
+        engine = RulesEngine()
+        worker = ScanWorker(work_queue, results_queue, engine)
 
         extensions = [".tf", ".tfvars"]
         for ext in extensions:
@@ -953,7 +995,10 @@ class TestParserCaching:
         """Test that _get_parser returns None for unsupported file extensions."""
         work_queue: queue.Queue[Path | None] = queue.Queue()
         results_queue: queue.Queue[tuple[Path, list[Any]]] = queue.Queue()
-        worker = ScanWorker(work_queue, results_queue)
+        from hackmenot.rules.engine import RulesEngine
+
+        engine = RulesEngine()
+        worker = ScanWorker(work_queue, results_queue, engine)
 
         # Test various unsupported extensions
         unsupported = [".md", ".json", ".yaml", ".txt", ".exe", ""]
@@ -965,7 +1010,10 @@ class TestParserCaching:
         """Test that ScanWorker initializes with empty parser cache."""
         work_queue: queue.Queue[Path | None] = queue.Queue()
         results_queue: queue.Queue[tuple[Path, list[Any]]] = queue.Queue()
-        worker = ScanWorker(work_queue, results_queue)
+        from hackmenot.rules.engine import RulesEngine
+
+        engine = RulesEngine()
+        worker = ScanWorker(work_queue, results_queue, engine)
 
         # Worker should have an empty parsers dict
         assert hasattr(worker, "_parsers")
@@ -977,8 +1025,11 @@ class TestParserCaching:
         work_queue: queue.Queue[Path | None] = queue.Queue()
         results_queue: queue.Queue[tuple[Path, list[Any]]] = queue.Queue()
 
-        worker1 = ScanWorker(work_queue, results_queue)
-        worker2 = ScanWorker(work_queue, results_queue)
+        from hackmenot.rules.engine import RulesEngine
+
+        engine = RulesEngine()
+        worker1 = ScanWorker(work_queue, results_queue, engine)
+        worker2 = ScanWorker(work_queue, results_queue, engine)
 
         # Get parsers in both workers
         parser1_py = worker1._get_parser(Path("/fake/test.py"))
@@ -988,3 +1039,291 @@ class TestParserCaching:
         assert parser1_py is not None
         assert parser2_py is not None
         assert parser1_py is not parser2_py
+
+
+class TestRuleLoading:
+    """Test automatic rule loading in ParallelScanner."""
+
+    def test_scanner_loads_rules_automatically_by_default(self) -> None:
+        """Test that ParallelScanner loads rules from RuleRegistry by default."""
+        scanner = ParallelScanner()
+
+        # Should have a rules_engine
+        assert scanner.rules_engine is not None
+
+        # Rules engine should have rules loaded (rules is a dict)
+        assert len(scanner.rules_engine.rules) > 0
+
+    def test_scanner_accepts_custom_rules_engine(self) -> None:
+        """Test that ParallelScanner accepts a custom RulesEngine."""
+        from hackmenot.core.models import FixConfig, Rule, Severity
+        from hackmenot.rules.engine import RulesEngine
+
+        # Create custom engine with specific rules
+        custom_engine = RulesEngine()
+        custom_rule = Rule(
+            id="custom-rule",
+            name="Custom Rule",
+            severity=Severity.HIGH,
+            category="test",
+            languages=["python"],
+            description="A custom test rule",
+            message="This is a custom rule",
+            pattern={"type": "call", "names": ["test"]},
+            fix=FixConfig(template="Don't call test"),
+            education="This is for testing",
+        )
+        custom_engine.register_rule(custom_rule)
+
+        # Create scanner with custom engine
+        scanner = ParallelScanner(rules_engine=custom_engine)
+
+        # Should use the custom engine
+        assert scanner.rules_engine is custom_engine
+        assert len(scanner.rules_engine.rules) == 1
+        assert "custom-rule" in scanner.rules_engine.rules
+        assert scanner.rules_engine.rules["custom-rule"].id == "custom-rule"
+
+    def test_scanner_loads_builtin_rules_by_default(self) -> None:
+        """Test that ParallelScanner loads builtin rules by default."""
+        scanner = ParallelScanner()
+
+        # Should have rules from builtin directory (rules is a dict of rule_id -> Rule)
+        rule_ids = list(scanner.rules_engine.rules.keys())
+
+        # Should have loaded many rules (100+)
+        assert len(rule_ids) > 100
+
+        # Check for some known builtin rules (Terraform, Go, JS, etc.)
+        assert any("TF_" in rule_id for rule_id in rule_ids)  # Terraform rules
+        assert any("GO_" in rule_id for rule_id in rule_ids)  # Go rules
+        # JS rules use JSCR, JSAU, XSS prefixes
+        assert any(
+            any(prefix in rule_id for prefix in ["JSCR", "JSAU", "XSS"]) for rule_id in rule_ids
+        )
+
+    def test_scanner_passes_rules_to_workers(self, tmp_path: Path) -> None:
+        """Test that scanner passes rules_engine to worker processes."""
+        from hackmenot.core.models import Finding, FixConfig, Rule, Severity
+        from hackmenot.rules.engine import RulesEngine
+
+        # Create engine with a test rule
+        engine = RulesEngine()
+        rule = Rule(
+            id="test-fstring-sql",
+            name="SQL Injection via f-string",
+            severity=Severity.HIGH,
+            category="security",
+            languages=["python"],
+            description="SQL query with f-string interpolation",
+            message="SQL query uses f-string interpolation",
+            pattern={"type": "fstring", "contains": ["SELECT"]},
+            fix=FixConfig(template="Use parameterized queries"),
+            education="F-strings in SQL can lead to SQL injection",
+        )
+        engine.register_rule(rule)
+
+        # Create scanner with custom engine
+        scanner = ParallelScanner(num_workers=1, rules_engine=engine)
+
+        # Create test file with vulnerability
+        test_file = tmp_path / "vuln.py"
+        test_file.write_text('query = f"SELECT * FROM users WHERE id = {user_id}"')
+
+        # Scan should find the issue
+        results = scanner.scan([tmp_path])
+
+        # Should have scanned the file
+        assert results.files_scanned == 1
+
+        # Should have findings
+        assert len(results.findings) == 1
+        file_path, findings = results.findings[0]
+        assert len(findings) > 0
+        assert isinstance(findings[0], Finding)
+        assert findings[0].rule_id == "test-fstring-sql"
+
+
+class TestFileScanningWithRules:
+    """Test file scanning with rules integration."""
+
+    def test_scan_file_parses_and_checks_rules(self, tmp_path: Path) -> None:
+        """Test that _scan_file parses file and finds issues."""
+        from hackmenot.core.models import Finding, FixConfig, Rule, Severity
+        from hackmenot.rules.engine import RulesEngine
+
+        # Create a test Python file with SQL injection vulnerability
+        test_file = tmp_path / "test.py"
+        test_file.write_text('query = f"SELECT * FROM users WHERE id = {user_id}"')
+
+        work_queue: queue.Queue[Path | None] = queue.Queue()
+        results_queue: queue.Queue[tuple[Path, list[Any]]] = queue.Queue()
+
+        # Create a worker with a rules engine
+        engine = RulesEngine()
+        # Register a simple SQL injection rule
+        rule = Rule(
+            id="test-sql-injection",
+            name="SQL Injection via f-string",
+            severity=Severity.HIGH,
+            category="security",
+            languages=["python"],
+            description="SQL query with f-string interpolation",
+            message="SQL query uses f-string interpolation which can lead to SQL injection",
+            pattern={"type": "fstring", "contains": ["SELECT"]},
+            fix=FixConfig(template="Use parameterized queries instead"),
+            education="F-strings in SQL queries can lead to SQL injection attacks",
+        )
+        engine.register_rule(rule)
+
+        worker = ScanWorker(work_queue, results_queue, engine)
+
+        # Scan the file
+        findings = worker._scan_file(test_file)
+
+        # Should find the SQL injection
+        assert len(findings) > 0
+        assert isinstance(findings[0], Finding)
+        assert findings[0].rule_id == "test-sql-injection"
+
+    def test_scan_file_handles_parse_errors_gracefully(self, tmp_path: Path) -> None:
+        """Test that _scan_file handles parse errors without crashing."""
+        from hackmenot.rules.engine import RulesEngine
+
+        # Create a Python file with syntax error
+        test_file = tmp_path / "broken.py"
+        test_file.write_text("def broken(\n    # missing closing paren and body")
+
+        work_queue: queue.Queue[Path | None] = queue.Queue()
+        results_queue: queue.Queue[tuple[Path, list[Any]]] = queue.Queue()
+        engine = RulesEngine()
+
+        worker = ScanWorker(work_queue, results_queue, engine)
+
+        # Should not crash, should return empty list
+        findings = worker._scan_file(test_file)
+        assert isinstance(findings, list)
+        assert len(findings) == 0
+
+    def test_scan_file_handles_binary_files(self, tmp_path: Path) -> None:
+        """Test that _scan_file handles binary files (UnicodeDecodeError)."""
+        from hackmenot.rules.engine import RulesEngine
+
+        # Create a binary file
+        binary_file = tmp_path / "binary.py"
+        binary_file.write_bytes(b"\x00\x01\x02\x03\x04\x05")
+
+        work_queue: queue.Queue[Path | None] = queue.Queue()
+        results_queue: queue.Queue[tuple[Path, list[Any]]] = queue.Queue()
+        engine = RulesEngine()
+
+        worker = ScanWorker(work_queue, results_queue, engine)
+
+        # Should not crash, should return empty list
+        findings = worker._scan_file(binary_file)
+        assert isinstance(findings, list)
+        assert len(findings) == 0
+
+    def test_scan_file_returns_empty_list_for_clean_files(self, tmp_path: Path) -> None:
+        """Test that _scan_file returns empty list for files with no issues."""
+        from hackmenot.rules.engine import RulesEngine
+
+        # Create a clean Python file
+        test_file = tmp_path / "clean.py"
+        test_file.write_text("print('Hello, world!')")
+
+        work_queue: queue.Queue[Path | None] = queue.Queue()
+        results_queue: queue.Queue[tuple[Path, list[Any]]] = queue.Queue()
+        engine = RulesEngine()
+
+        worker = ScanWorker(work_queue, results_queue, engine)
+
+        # Should return empty list (no findings)
+        findings = worker._scan_file(test_file)
+        assert isinstance(findings, list)
+        assert len(findings) == 0
+
+    def test_scan_file_uses_correct_parser_for_file_type(self, tmp_path: Path) -> None:
+        """Test that _scan_file uses correct parser for different file types."""
+        from hackmenot.core.models import FixConfig, Rule, Severity
+        from hackmenot.rules.engine import RulesEngine
+
+        # Create JS file with console.log
+        js_file = tmp_path / "test.js"
+        js_file.write_text("console.log('debug info');")
+
+        work_queue: queue.Queue[Path | None] = queue.Queue()
+        results_queue: queue.Queue[tuple[Path, list[Any]]] = queue.Queue()
+
+        engine = RulesEngine()
+        # Register a JS rule for console.log
+        rule = Rule(
+            id="test-console-log",
+            name="Console.log in production",
+            severity=Severity.LOW,
+            category="code-quality",
+            languages=["javascript"],
+            description="Avoid console.log in production",
+            message="Remove console.log statements before deploying",
+            pattern={"type": "call", "names": ["console.log"]},
+            fix=FixConfig(template="Use a proper logging library"),
+            education="Console.log should not be used in production code",
+        )
+        engine.register_rule(rule)
+
+        worker = ScanWorker(work_queue, results_queue, engine)
+
+        # Scan the file
+        findings = worker._scan_file(js_file)
+
+        # Should find console.log
+        assert len(findings) > 0
+        assert findings[0].rule_id == "test-console-log"
+
+    def test_scan_file_handles_unsupported_file_types(self, tmp_path: Path) -> None:
+        """Test that _scan_file handles unsupported file types gracefully."""
+        from hackmenot.rules.engine import RulesEngine
+
+        # Create a file with unsupported extension
+        unsupported_file = tmp_path / "readme.md"
+        unsupported_file.write_text("# README")
+
+        work_queue: queue.Queue[Path | None] = queue.Queue()
+        results_queue: queue.Queue[tuple[Path, list[Any]]] = queue.Queue()
+        engine = RulesEngine()
+
+        worker = ScanWorker(work_queue, results_queue, engine)
+
+        # Should return empty list (no parser for .md)
+        findings = worker._scan_file(unsupported_file)
+        assert isinstance(findings, list)
+        assert len(findings) == 0
+
+    def test_scan_file_handles_rule_check_errors(self, tmp_path: Path) -> None:
+        """Test that _scan_file handles errors during rule checking gracefully."""
+        from hackmenot.rules.engine import RulesEngine
+
+        # Create a valid Python file
+        test_file = tmp_path / "test.py"
+        test_file.write_text("print('hello')")
+
+        work_queue: queue.Queue[Path | None] = queue.Queue()
+        results_queue: queue.Queue[tuple[Path, list[Any]]] = queue.Queue()
+
+        # Create a mock engine that will raise an error
+        engine = RulesEngine()
+
+        worker = ScanWorker(work_queue, results_queue, engine)
+
+        # Mock the check method to raise an error
+        original_check = engine.check
+
+        def failing_check(*args: Any, **kwargs: Any) -> list[Any]:
+            raise RuntimeError("Simulated rule check error")
+
+        engine.check = failing_check  # type: ignore
+
+        # Should not crash, should return empty list
+        findings = worker._scan_file(test_file)
+        assert isinstance(findings, list)
+        assert len(findings) == 0

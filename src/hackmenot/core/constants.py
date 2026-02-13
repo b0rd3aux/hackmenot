@@ -5,6 +5,7 @@ import os
 # Scanner constants
 DEFAULT_WORKERS = min(32, (os.cpu_count() or 1) + 4)
 WORKER_QUEUE_TIMEOUT = 1.0  # seconds, timeout for worker queue.get() calls
+WORKER_SHUTDOWN_TIMEOUT = 10.0  # seconds, max time to wait for workers to finish
 WORK_QUEUE_MAXSIZE = 1000  # Max files queued for distribution (provides backpressure)
 
 # File extension sets by language
